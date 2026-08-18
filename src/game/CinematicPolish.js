@@ -78,7 +78,7 @@ export function installCinematicPolish(game) {
 
     game.bossRevealTimer = Math.max(0, game.bossRevealTimer - dt);
     const remaining = game.bossRevealTimer / game.bossRevealDuration;
-    const returnBlend = THREE.MathUtils.smoothstep(remaining, 0, .24);
+    const strength = THREE.MathUtils.smoothstep(remaining, 0, .28);
     const bossPos = game.boss.position.clone();
     const playerPos = game.player.position.clone();
     const towardBoss = bossPos.clone().sub(playerPos); towardBoss.y = 0;
@@ -92,7 +92,6 @@ export function installCinematicPolish(game) {
       .add(new V(0, 4.15, 0));
     const cinematicLook = bossPos.clone().add(new V(0, 2.0, 0));
 
-    const strength = 1 - returnBlend;
     game.camera.position.lerp(cinematicPos, (1 - Math.exp(-dt * 8)) * strength);
     const normalLook = playerPos.clone().add(new V(0, 1.35, 0)).addScaledVector(towardBoss, 1.0);
     const lookAt = normalLook.lerp(cinematicLook, .78 * strength);

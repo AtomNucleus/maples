@@ -25,7 +25,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p public/assets/characters public/assets/monsters public/assets/licenses docs
+          mkdir -p public/assets/characters public/assets/monsters public/assets/environment public/assets/licenses docs
 
           curl --fail --location --retry 3 \
             'https://raw.githubusercontent.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0/main/addons/kaykit_character_pack_adventures/Characters/gltf/Knight.glb' \
@@ -47,18 +47,34 @@ jobs:
             'https://raw.githubusercontent.com/ilrein/warptracker/main/public/models/sword.glb' \
             --output public/assets/characters/rowan-sword.glb
 
+          KAYKIT_DUNGEON='https://raw.githubusercontent.com/KayKit-Game-Assets/KayKit-Dungeon-Remastered-1.0/main/addons/kaykit_dungeon_remastered/Assets/gltf'
+          curl --fail --location --retry 3 "$KAYKIT_DUNGEON/wall_arched.gltf.glb" \
+            --output public/assets/environment/glade-arch.glb
+          curl --fail --location --retry 3 "$KAYKIT_DUNGEON/wall_broken.gltf.glb" \
+            --output public/assets/environment/ruin-wall-broken.glb
+          curl --fail --location --retry 3 "$KAYKIT_DUNGEON/pillar_decorated.gltf.glb" \
+            --output public/assets/environment/ruin-pillar.glb
+          curl --fail --location --retry 3 "$KAYKIT_DUNGEON/stairs_wide.gltf.glb" \
+            --output public/assets/environment/shrine-stairs.glb
+          curl --fail --location --retry 3 "$KAYKIT_DUNGEON/torch_lit.gltf.glb" \
+            --output public/assets/environment/torch-lit.glb
+
           curl --fail --location --retry 3 \
             'https://raw.githubusercontent.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0/main/addons/kaykit_character_pack_adventures/LICENSE.txt' \
             --output public/assets/licenses/KAYKIT_ADVENTURERS_LICENSE.txt
+          curl --fail --location --retry 3 \
+            'https://raw.githubusercontent.com/KayKit-Game-Assets/KayKit-Dungeon-Remastered-1.0/main/addons/kaykit_dungeon_remastered/Assets/LICENSE.txt' \
+            --output public/assets/licenses/KAYKIT_DUNGEON_LICENSE.txt
           curl --fail --location --retry 3 \
             'https://raw.githubusercontent.com/ilrein/warptracker/main/ASSETS.md' \
             --output public/assets/licenses/QUATERNIUS_PROVENANCE.md
 
           test $(stat -c%s public/assets/characters/rowan-knight.glb) -gt 3000000
           test $(stat -c%s public/assets/monsters/thornmaw-demon.glb) -gt 400000
+          test $(stat -c%s public/assets/environment/glade-arch.glb) -gt 40000
           file public/assets/**/*.glb
 
-      - name: Inspect GLB nodes and animation clips
+      - name: Inspect GLB nodes, bounds, and animation clips
         shell: bash
         run: |
           node <<'NODE'
@@ -74,10 +90,28 @@ jobs:
             const jsonType = b.readUInt32LE(16);
             if (version !== 2 || jsonType !== 0x4E4F534A) throw new Error(`${file}: unsupported GLB`);
             const json = JSON.parse(b.subarray(20, 20 + jsonLength).toString('utf8').replace(/\0+$/g, '').trim());
+            const positionAccessors = [];
+            for (const mesh of json.meshes || []) {
+              for (const primitive of mesh.primitives || []) {
+                const index = primitive.attributes?.POSITION;
+                if (index != null) {
+                  const accessor = json.accessors?.[index];
+                  if (accessor?.min && accessor?.max) positionAccessors.push({ min: accessor.min, max: accessor.max });
+                }
+              }
+            }
+            const bounds = positionAccessors.length ? positionAccessors.reduce((acc, entry) => {
+              for (let i = 0; i < 3; i++) {
+                acc.min[i] = Math.min(acc.min[i], entry.min[i]);
+                acc.max[i] = Math.max(acc.max[i], entry.max[i]);
+              }
+              return acc;
+            }, { min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] }) : null;
             return {
               file,
               bytes: b.length,
               declaredLength,
+              bounds,
               animations: (json.animations || []).map((a, i) => a.name || `animation_${i}`),
               nodes: (json.nodes || []).map((n, i) => n.name || `node_${i}`),
               meshes: (json.meshes || []).map((m, i) => m.name || `mesh_${i}`),
@@ -86,7 +120,7 @@ jobs:
           }
 
           const files = [];
-          for (const dir of ['public/assets/characters', 'public/assets/monsters']) {
+          for (const dir of ['public/assets/characters', 'public/assets/monsters', 'public/assets/environment']) {
             for (const name of fs.readdirSync(dir)) if (name.endsWith('.glb')) files.push(path.join(dir, name));
           }
           const report = files.map(inspect);

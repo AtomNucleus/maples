@@ -3,6 +3,8 @@ name: Anonymous Netlify Deploy
 on:
   push:
     branches: [feature/sunken-grove-vertical-slice]
+  pull_request:
+    branches: [main]
 
 jobs:
   deploy:

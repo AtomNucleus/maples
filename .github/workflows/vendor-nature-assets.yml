@@ -1,0 +1,47 @@
+name: Vendor curated CC0 nature assets
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/vendor-nature-assets.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  vendor-nature:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - name: Download curated Quaternius nature subset
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public/assets/nature public/assets/licenses
+          BASE='https://raw.githubusercontent.com/petroulacl/fps-buildings-env-kit/main/environment/vegetation/polypizza-stylized-nature-gltf'
+          curl --fail --location --retry 3 "$BASE/Pine-699sFuLCN2.glb" --output public/assets/nature/lumen-pine.glb
+          curl --fail --location --retry 3 "$BASE/Bush%20with%20Flowers.glb" --output public/assets/nature/flowering-bush.glb
+          curl --fail --location --retry 3 "$BASE/Fern.glb" --output public/assets/nature/fern.glb
+          curl --fail --location --retry 3 "$BASE/Grass%20Wispy.glb" --output public/assets/nature/wispy-grass.glb
+          curl --fail --location --retry 3 \
+            'https://raw.githubusercontent.com/petroulacl/fps-buildings-env-kit/main/README.md' \
+            --output public/assets/licenses/QUATERNIUS_NATURE_PROVENANCE.md
+          test $(stat -c%s public/assets/nature/lumen-pine.glb) -gt 2000000
+          test $(stat -c%s public/assets/nature/flowering-bush.glb) -gt 700000
+          file public/assets/nature/*.glb
+      - name: Commit nature assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/assets/nature public/assets/licenses/QUATERNIUS_NATURE_PROVENANCE.md
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Vendor curated CC0 stylized nature assets'
+          git push origin HEAD:${{ github.head_ref }}

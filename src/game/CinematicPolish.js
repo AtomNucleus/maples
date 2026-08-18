@@ -26,7 +26,6 @@ function styleImportedEnemy(enemy) {
     }
   });
 
-  // Small unshadowed aura lights make dark monster silhouettes readable without changing the world lighting budget much.
   if (enemy.assetKind === 'ghost' || enemy.assetKind === 'bat') {
     const aura = new THREE.PointLight(look.tint, enemy.assetKind === 'ghost' ? .55 : .3, 3.2, 2.2);
     aura.position.y = enemy.assetKind === 'ghost' ? 1.05 : 1.25;
@@ -94,12 +93,12 @@ export function installCinematicPolish(game) {
     const cinematicLook = bossPos.clone().add(new V(0, 2.0, 0));
 
     const strength = 1 - returnBlend;
-    this.camera.position.lerp(cinematicPos, (1 - Math.exp(-dt * 8)) * strength);
+    game.camera.position.lerp(cinematicPos, (1 - Math.exp(-dt * 8)) * strength);
     const normalLook = playerPos.clone().add(new V(0, 1.35, 0)).addScaledVector(towardBoss, 1.0);
     const lookAt = normalLook.lerp(cinematicLook, .78 * strength);
-    this.camera.lookAt(lookAt);
-    this.camera.fov = damp(this.camera.fov, 57, 9, dt);
-    this.camera.updateProjectionMatrix();
+    game.camera.lookAt(lookAt);
+    game.camera.fov = damp(game.camera.fov, 57, 9, dt);
+    game.camera.updateProjectionMatrix();
   };
 
   return game;

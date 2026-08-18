@@ -3,6 +3,8 @@ name: Showcase build and anonymous deploy
 on:
   push:
     branches: ["agent/emberfall-showcase"]
+  pull_request:
+    branches: ["main"]
   workflow_dispatch:
 
 jobs:

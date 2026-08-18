@@ -5,6 +5,7 @@ import { enhanceInstance } from './game/Enhancements.js';
 import { installAssetVisuals } from './game/AssetVisuals.js';
 import { installEnvironmentAssets } from './game/EnvironmentAssets.js';
 import { installNatureAssets } from './game/NatureAssets.js';
+import { installCinematicPolish } from './game/CinematicPolish.js';
 
 const canvas = document.querySelector('#game');
 const game = new Game(canvas);
@@ -15,6 +16,7 @@ enterButton.disabled = true;
 enterButton.textContent = 'Summoning the Glade…';
 
 const visualManager = installAssetVisuals(game);
+installCinematicPolish(game);
 const environmentPromise = installEnvironmentAssets(game);
 const naturePromise = installNatureAssets(game);
 

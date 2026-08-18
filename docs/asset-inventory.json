@@ -3,6 +3,18 @@
     "file": "public/assets/characters/rowan-knight.glb",
     "bytes": 3659532,
     "declaredLength": 3659532,
+    "bounds": {
+      "min": [
+        -0.9712533354759216,
+        -1.1218448877334595,
+        -0.542184591293335
+      ],
+      "max": [
+        0.9712533354759216,
+        2.3145079612731934,
+        0.7114353179931641
+      ]
+    },
     "animations": [
       "1H_Melee_Attack_Chop",
       "1H_Melee_Attack_Slice_Diagonal",
@@ -165,6 +177,18 @@
     "file": "public/assets/characters/rowan-sword.glb",
     "bytes": 28420,
     "declaredLength": 28420,
+    "bounds": {
+      "min": [
+        -0.3855740427970886,
+        -0.4936923086643219,
+        -0.10822990536689758
+      ],
+      "max": [
+        0.3855740427970886,
+        3.858828067779541,
+        0.12032490223646164
+      ]
+    },
     "animations": [],
     "nodes": [
       "Sword"
@@ -178,6 +202,18 @@
     "file": "public/assets/monsters/briar-bat.glb",
     "bytes": 244064,
     "declaredLength": 244064,
+    "bounds": {
+      "min": [
+        -1.2841073274612427,
+        -0.13947844505310059,
+        -2.8839073181152344
+      ],
+      "max": [
+        1.4490793943405151,
+        4.50594425201416,
+        1.4300297498703003
+      ]
+    },
     "animations": [
       "BatArmature|BatArmature|Bat_Attack",
       "BatArmature|BatArmature|Bat_Attack2",
@@ -230,6 +266,18 @@
     "file": "public/assets/monsters/briar-ghost.glb",
     "bytes": 288500,
     "declaredLength": 288500,
+    "bounds": {
+      "min": [
+        -2.76387095451355,
+        0.28337180614471436,
+        -0.8488379120826721
+      ],
+      "max": [
+        2.7359254360198975,
+        3.38424015045166,
+        0.6851815581321716
+      ]
+    },
     "animations": [
       "Death",
       "Fast_Flying",
@@ -292,6 +340,18 @@
     "file": "public/assets/monsters/briar-skeleton.glb",
     "bytes": 189404,
     "declaredLength": 189404,
+    "bounds": {
+      "min": [
+        -2.304621696472168,
+        0.019312143325805664,
+        -0.6366950273513794
+      ],
+      "max": [
+        2.299955368041992,
+        5.108909606933594,
+        0.6924700140953064
+      ]
+    },
     "animations": [
       "SkeletonArmature|SkeletonArmature|Skeleton_Attack",
       "SkeletonArmature|SkeletonArmature|Skeleton_Death",
@@ -331,6 +391,18 @@
     "file": "public/assets/monsters/thornmaw-demon.glb",
     "bytes": 554308,
     "declaredLength": 554308,
+    "bounds": {
+      "min": [
+        -2.327918767929077,
+        -0.015488493256270885,
+        -1.3295974731445312
+      ],
+      "max": [
+        2.327918767929077,
+        3.104957342147827,
+        0.9904832243919373
+      ]
+    },
     "animations": [
       "Death",
       "Duck",
@@ -401,5 +473,130 @@
     "skins": [
       "CharacterArmature"
     ]
+  },
+  {
+    "file": "public/assets/environment/glade-arch.glb",
+    "bytes": 69124,
+    "declaredLength": 69124,
+    "bounds": {
+      "min": [
+        -2.000000238418579,
+        0,
+        -0.4999999701976776
+      ],
+      "max": [
+        2,
+        4,
+        0.5000005960464478
+      ]
+    },
+    "animations": [],
+    "nodes": [
+      "wall_arched"
+    ],
+    "meshes": [
+      "Cube.16047"
+    ],
+    "skins": []
+  },
+  {
+    "file": "public/assets/environment/ruin-pillar.glb",
+    "bytes": 62460,
+    "declaredLength": 62460,
+    "bounds": {
+      "min": [
+        -1.1159993410110474,
+        0,
+        -0.7499999403953552
+      ],
+      "max": [
+        1.116003155708313,
+        4,
+        0.9601638317108154
+      ]
+    },
+    "animations": [],
+    "nodes": [
+      "pillar_decorated"
+    ],
+    "meshes": [
+      "Cube.16005"
+    ],
+    "skins": []
+  },
+  {
+    "file": "public/assets/environment/ruin-wall-broken.glb",
+    "bytes": 69276,
+    "declaredLength": 69276,
+    "bounds": {
+      "min": [
+        -2,
+        0,
+        -0.4999999701976776
+      ],
+      "max": [
+        2,
+        4,
+        0.4999999701976776
+      ]
+    },
+    "animations": [],
+    "nodes": [
+      "wall_broken"
+    ],
+    "meshes": [
+      "Cube.16051"
+    ],
+    "skins": []
+  },
+  {
+    "file": "public/assets/environment/shrine-stairs.glb",
+    "bytes": 43372,
+    "declaredLength": 43372,
+    "bounds": {
+      "min": [
+        -3.500000238418579,
+        0,
+        -1.092784742695585e-7
+      ],
+      "max": [
+        3.5,
+        5.099999904632568,
+        4
+      ]
+    },
+    "animations": [],
+    "nodes": [
+      "stairs_wide"
+    ],
+    "meshes": [
+      "Cube.16017"
+    ],
+    "skins": []
+  },
+  {
+    "file": "public/assets/environment/torch-lit.glb",
+    "bytes": 31244,
+    "declaredLength": 31244,
+    "bounds": {
+      "min": [
+        -0.2751416563987732,
+        -0.395045667886734,
+        -0.2751416862010956
+      ],
+      "max": [
+        0.2751416862010956,
+        0.7307469248771667,
+        0.2751415967941284
+      ]
+    },
+    "animations": [],
+    "nodes": [
+      "torch_lit"
+    ],
+    "meshes": [
+      "Cylinder.021"
+    ],
+    "skins": []
   }
 ]

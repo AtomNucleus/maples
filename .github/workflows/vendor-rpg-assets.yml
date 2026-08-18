@@ -1,0 +1,109 @@
+name: Vendor CC0 RPG assets
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/vendor-rpg-assets.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  vendor-assets:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout showcase branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Download curated CC0 asset set
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public/assets/characters public/assets/monsters public/assets/licenses docs
+
+          curl --fail --location --retry 3 \
+            'https://raw.githubusercontent.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0/main/addons/kaykit_character_pack_adventures/Characters/gltf/Knight.glb' \
+            --output public/assets/characters/rowan-knight.glb
+
+          curl --fail --location --retry 3 \
+            'https://raw.githubusercontent.com/ilrein/warptracker/main/public/models/demon.glb' \
+            --output public/assets/monsters/thornmaw-demon.glb
+          curl --fail --location --retry 3 \
+            'https://raw.githubusercontent.com/ilrein/warptracker/main/public/models/ghost.glb' \
+            --output public/assets/monsters/briar-ghost.glb
+          curl --fail --location --retry 3 \
+            'https://raw.githubusercontent.com/ilrein/warptracker/main/public/models/skeleton.glb' \
+            --output public/assets/monsters/briar-skeleton.glb
+          curl --fail --location --retry 3 \
+            'https://raw.githubusercontent.com/ilrein/warptracker/main/public/models/bat.glb' \
+            --output public/assets/monsters/briar-bat.glb
+          curl --fail --location --retry 3 \
+            'https://raw.githubusercontent.com/ilrein/warptracker/main/public/models/sword.glb' \
+            --output public/assets/characters/rowan-sword.glb
+
+          curl --fail --location --retry 3 \
+            'https://raw.githubusercontent.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0/main/addons/kaykit_character_pack_adventures/LICENSE.txt' \
+            --output public/assets/licenses/KAYKIT_ADVENTURERS_LICENSE.txt
+          curl --fail --location --retry 3 \
+            'https://raw.githubusercontent.com/ilrein/warptracker/main/ASSETS.md' \
+            --output public/assets/licenses/QUATERNIUS_PROVENANCE.md
+
+          test $(stat -c%s public/assets/characters/rowan-knight.glb) -gt 3000000
+          test $(stat -c%s public/assets/monsters/thornmaw-demon.glb) -gt 400000
+          file public/assets/**/*.glb
+
+      - name: Inspect GLB nodes and animation clips
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+
+          function inspect(file) {
+            const b = fs.readFileSync(file);
+            if (b.toString('ascii', 0, 4) !== 'glTF') throw new Error(`${file}: not GLB`);
+            const version = b.readUInt32LE(4);
+            const declaredLength = b.readUInt32LE(8);
+            const jsonLength = b.readUInt32LE(12);
+            const jsonType = b.readUInt32LE(16);
+            if (version !== 2 || jsonType !== 0x4E4F534A) throw new Error(`${file}: unsupported GLB`);
+            const json = JSON.parse(b.subarray(20, 20 + jsonLength).toString('utf8').replace(/\0+$/g, '').trim());
+            return {
+              file,
+              bytes: b.length,
+              declaredLength,
+              animations: (json.animations || []).map((a, i) => a.name || `animation_${i}`),
+              nodes: (json.nodes || []).map((n, i) => n.name || `node_${i}`),
+              meshes: (json.meshes || []).map((m, i) => m.name || `mesh_${i}`),
+              skins: (json.skins || []).map((s, i) => s.name || `skin_${i}`),
+            };
+          }
+
+          const files = [];
+          for (const dir of ['public/assets/characters', 'public/assets/monsters']) {
+            for (const name of fs.readdirSync(dir)) if (name.endsWith('.glb')) files.push(path.join(dir, name));
+          }
+          const report = files.map(inspect);
+          fs.writeFileSync('docs/asset-inventory.json', JSON.stringify(report, null, 2) + '\n');
+          console.log(JSON.stringify(report, null, 2));
+          NODE
+
+      - name: Commit vendored assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/assets docs/asset-inventory.json
+          if git diff --cached --quiet; then
+            echo 'Assets already vendored.'
+            exit 0
+          fi
+          git commit -m 'Vendor curated CC0 RPG assets'
+          git push origin HEAD:${{ github.head_ref }}

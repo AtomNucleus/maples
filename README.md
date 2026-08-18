@@ -13,7 +13,7 @@
 
 ## The Sunken Glade vertical slice
 
-The encounter now combines authored gameplay with real, locally vendored GLTF art:
+The encounter combines authored gameplay with locally vendored GLTF art:
 
 - **Rowan:** an imported, rigged KayKit Knight with sword, shield, helmet and cape. His visible rig cross-fades native idle/walk/run, three one-handed attacks, dodge, spellcast, hit and death clips while Emberfall's own combat windows remain authoritative.
 - **Briarbound:** three imported Quaternius creature families — skeletons, ghosts and bats — with native movement/attack/hit/death animation mapped onto the existing telegraph, stagger and damage systems.

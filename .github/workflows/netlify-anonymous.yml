@@ -1,0 +1,24 @@
+name: Anonymous Netlify Deploy
+
+on:
+  push:
+    branches: [feature/sunken-grove-vertical-slice]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install
+      - name: Build
+        run: npm run build
+      - name: Deploy anonymously to Netlify
+        run: npx netlify-cli deploy --prod --allow-anonymous --dir=dist --json | tee netlify-output.json
+      - name: Print deploy URL
+        run: node -e "const fs=require('fs'); const s=fs.readFileSync('netlify-output.json','utf8'); const m=s.match(/https:\/\/[^\s\"']+\.netlify\.app/); if(!m) process.exit(1); console.log('NETLIFY_URL='+m[0]);"

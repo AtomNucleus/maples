@@ -1,4 +1,5 @@
 import './style.css';
+import './asset-polish.css';
 import { Game } from './game/Game.js';
 import { enhanceInstance } from './game/Enhancements.js';
 import { installAssetVisuals } from './game/AssetVisuals.js';
@@ -32,12 +33,7 @@ function waitForCoreVisuals(timeoutMs = 15000) {
 }
 
 Promise.allSettled([waitForCoreVisuals(), environmentPromise, naturePromise]).then(() => {
-  const failures = [
-    ...(visualManager.failures || []),
-    ...(game.environmentAssetManager?.failures || []),
-    ...(game.natureAssetManager?.failures || []),
-  ];
-  enterButton.textContent = failures.length ? 'Enter the Glade' : 'Enter the Glade';
+  enterButton.textContent = 'Enter the Glade';
   enterButton.disabled = false;
   enterButton.dataset.ready = 'true';
 });

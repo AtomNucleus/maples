@@ -32,6 +32,23 @@ Used in Maples:
 
 The provenance manifest is stored at `public/assets/licenses/QUATERNIUS_PROVENANCE.md`.
 
+## Quaternius — Stylized Nature MegaKit
+
+Creator: Quaternius  
+Original pack: Stylized Nature MegaKit  
+License: Creative Commons Zero (CC0 1.0).
+
+A deliberately small GLB subset was curated from the public `petroulacl/fps-buildings-env-kit` mirror, whose README records the vegetation set as Quaternius Stylized Nature MegaKit / CC0. The game instances these few source models many times rather than shipping the full pack.
+
+Used in Maples:
+
+- `public/assets/nature/lumen-pine.glb`
+- `public/assets/nature/flowering-bush.glb`
+- `public/assets/nature/fern.glb`
+- `public/assets/nature/wispy-grass.glb`
+
+The mirror/provenance README is stored at `public/assets/licenses/QUATERNIUS_NATURE_PROVENANCE.md`.
+
 ## KayKit — Dungeon Remastered 1.0
 
 Creator: Kay Lousberg / KayKit  
@@ -50,4 +67,4 @@ A copy of the upstream license is stored at `public/assets/licenses/KAYKIT_DUNGE
 
 ## Asset inventory
 
-`docs/asset-inventory.json` records the vendored GLBs' byte sizes, bounds, node names, skins and animation clip names. It is generated from the actual binary files and is used as an integration reference rather than relying on guessed animation names.
+`docs/asset-inventory.json` records the vendored character, monster and dungeon GLBs' byte sizes, bounds, node names, skins and animation clip names. It is generated from the actual binary files and is used as an integration reference rather than relying on guessed animation names.

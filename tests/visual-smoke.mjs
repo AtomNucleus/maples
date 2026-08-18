@@ -27,7 +27,9 @@ await page.goto('http://127.0.0.1:4173/?quality=high&capture=1', { waitUntil: 'n
 await page.waitForFunction(() => Boolean(window.__MAPLES_GAME__));
 await page.waitForFunction(() => {
   const g = window.__MAPLES_GAME__;
-  return g.assetVisualManager?.ready && g.assetVisualManager?.heroReady && g.enemies.filter(e => e.assetVisual).length >= 5;
+  return g.assetVisualManager?.ready && g.assetVisualManager?.heroReady &&
+    g.enemies.filter(e => e.assetVisual).length >= 5 &&
+    g.environmentAssetManager?.ready && g.environmentAssetManager?.count >= 14;
 }, null, { timeout: 20000 });
 await page.waitForTimeout(500);
 notes.boot = await page.evaluate(() => {
@@ -40,6 +42,9 @@ notes.boot = await page.evaluate(() => {
     heroAnimation: g.player.assetAnimator?.key ?? null,
     enemyKinds: g.enemies.filter(e => e.assetVisual).map(e => e.assetKind),
     assetFailures: [...(g.assetVisualManager?.failures || [])],
+    environmentReady: Boolean(g.environmentAssetManager?.ready),
+    environmentPieces: g.environmentAssetManager?.count ?? 0,
+    environmentFailures: [...(g.environmentAssetManager?.failures || [])],
     sceneChildren: g.scene.children.length,
     renderer: g.renderer.info.render
   };
@@ -48,6 +53,8 @@ if (notes.boot.enemies < 5) errors.push(`Expected at least 5 enemies, got ${note
 if (notes.boot.importedEnemies < 5) errors.push(`Expected 5 imported enemy visuals, got ${notes.boot.importedEnemies}`);
 if (!notes.boot.heroImported) errors.push('Rowan imported Knight GLB did not attach');
 if (notes.boot.assetFailures.length) errors.push(`Asset load failures: ${notes.boot.assetFailures.join('; ')}`);
+if (!notes.boot.environmentReady || notes.boot.environmentPieces < 14) errors.push(`Environment asset layer incomplete: ${notes.boot.environmentPieces} pieces`);
+if (notes.boot.environmentFailures.length) errors.push(`Environment asset failures: ${notes.boot.environmentFailures.join('; ')}`);
 if (notes.boot.quality !== 'high') errors.push(`Expected high showcase quality, got ${notes.boot.quality}`);
 await page.screenshot({ path: path.join(out, '01-intro.png') });
 
@@ -125,16 +132,24 @@ const mp = await mobile.newPage();
 mp.on('pageerror', error => errors.push(`mobile pageerror: ${error.message}`));
 await mp.goto('http://127.0.0.1:4173', { waitUntil: 'networkidle' });
 await mp.waitForFunction(() => Boolean(window.__MAPLES_GAME__));
-await mp.waitForFunction(() => Boolean(window.__MAPLES_GAME__.player.assetVisual), null, { timeout: 15000 });
+await mp.waitForFunction(() => {
+  const g = window.__MAPLES_GAME__;
+  return Boolean(g.player.assetVisual) && Boolean(g.environmentAssetManager?.ready);
+}, null, { timeout: 15000 });
 await mp.waitForTimeout(400);
 notes.mobile = await mp.evaluate(() => ({
   controls: getComputedStyle(document.querySelector('#mobile-controls')).display,
   quality: window.__MAPLES_GAME__.quality,
   heroImported: Boolean(window.__MAPLES_GAME__.player.assetVisual),
-  failures: [...(window.__MAPLES_GAME__.assetVisualManager?.failures || [])]
+  environmentPieces: window.__MAPLES_GAME__.environmentAssetManager?.count ?? 0,
+  failures: [
+    ...(window.__MAPLES_GAME__.assetVisualManager?.failures || []),
+    ...(window.__MAPLES_GAME__.environmentAssetManager?.failures || [])
+  ]
 }));
 if (notes.mobile.controls === 'none') errors.push('Mobile controls are hidden on touch viewport');
 if (!notes.mobile.heroImported) errors.push('Imported Rowan visual failed on mobile');
+if (notes.mobile.environmentPieces < 14) errors.push(`Mobile environment asset layer incomplete: ${notes.mobile.environmentPieces}`);
 if (notes.mobile.failures.length) errors.push(`Mobile asset failures: ${notes.mobile.failures.join('; ')}`);
 await mp.screenshot({ path: path.join(out, '06-mobile.png') });
 await mobile.close();

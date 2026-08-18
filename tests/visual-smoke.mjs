@@ -25,14 +25,29 @@ page.on('console', msg => {
 
 await page.goto('http://127.0.0.1:4173/?quality=high&capture=1', { waitUntil: 'networkidle' });
 await page.waitForFunction(() => Boolean(window.__MAPLES_GAME__));
-await page.waitForTimeout(1600);
-notes.boot = await page.evaluate(() => ({
-  quality: window.__MAPLES_GAME__.quality,
-  enemies: window.__MAPLES_GAME__.enemies.length,
-  sceneChildren: window.__MAPLES_GAME__.scene.children.length,
-  renderer: window.__MAPLES_GAME__.renderer.info.render
-}));
+await page.waitForFunction(() => {
+  const g = window.__MAPLES_GAME__;
+  return g.assetVisualManager?.ready && g.assetVisualManager?.heroReady && g.enemies.filter(e => e.assetVisual).length >= 5;
+}, null, { timeout: 20000 });
+await page.waitForTimeout(500);
+notes.boot = await page.evaluate(() => {
+  const g = window.__MAPLES_GAME__;
+  return {
+    quality: g.quality,
+    enemies: g.enemies.length,
+    importedEnemies: g.enemies.filter(e => e.assetVisual).length,
+    heroImported: Boolean(g.player.assetVisual),
+    heroAnimation: g.player.assetAnimator?.key ?? null,
+    enemyKinds: g.enemies.filter(e => e.assetVisual).map(e => e.assetKind),
+    assetFailures: [...(g.assetVisualManager?.failures || [])],
+    sceneChildren: g.scene.children.length,
+    renderer: g.renderer.info.render
+  };
+});
 if (notes.boot.enemies < 5) errors.push(`Expected at least 5 enemies, got ${notes.boot.enemies}`);
+if (notes.boot.importedEnemies < 5) errors.push(`Expected 5 imported enemy visuals, got ${notes.boot.importedEnemies}`);
+if (!notes.boot.heroImported) errors.push('Rowan imported Knight GLB did not attach');
+if (notes.boot.assetFailures.length) errors.push(`Asset load failures: ${notes.boot.assetFailures.join('; ')}`);
 if (notes.boot.quality !== 'high') errors.push(`Expected high showcase quality, got ${notes.boot.quality}`);
 await page.screenshot({ path: path.join(out, '01-intro.png') });
 
@@ -51,6 +66,10 @@ await page.evaluate(() => {
 await page.keyboard.down('w'); await page.waitForTimeout(100); await page.keyboard.up('w');
 await page.mouse.click(640, 360);
 await page.waitForTimeout(155);
+notes.melee = await page.evaluate(() => ({
+  playerAnimation: window.__MAPLES_GAME__.player.assetAnimator?.key ?? null
+}));
+if (!String(notes.melee.playerAnimation).startsWith('attack')) errors.push(`Imported player rig did not enter attack animation: ${notes.melee.playerAnimation}`);
 await page.screenshot({ path: path.join(out, '02-melee-impact.png') });
 await page.waitForTimeout(300);
 await page.mouse.click(640, 360);
@@ -67,7 +86,10 @@ await page.evaluate(() => {
   if (target) { target.position.set(0, 0, 1.7); target.state = 'idle'; target.stateTime = 0; }
 });
 await page.keyboard.press('q');
-await page.waitForTimeout(235);
+await page.waitForTimeout(170);
+notes.spell = await page.evaluate(() => ({ playerAnimation: window.__MAPLES_GAME__.player.assetAnimator?.key ?? null }));
+if (notes.spell.playerAnimation !== 'cast') errors.push(`Imported player rig did not enter cast animation: ${notes.spell.playerAnimation}`);
+await page.waitForTimeout(65);
 await page.screenshot({ path: path.join(out, '04-ember-lance.png') });
 await page.waitForTimeout(450);
 
@@ -79,15 +101,20 @@ await page.evaluate(() => {
   g.player.setPosition(0, 0, -6.3); g.player.facing = Math.PI; g.player.root.rotation.y = Math.PI;
   g.cameraYaw = Math.PI;
 });
-await page.waitForTimeout(900);
-notes.boss = await page.evaluate(() => ({ spawned: Boolean(window.__MAPLES_GAME__.boss), hp: window.__MAPLES_GAME__.boss?.hp ?? null }));
+await page.waitForFunction(() => Boolean(window.__MAPLES_GAME__.boss?.assetVisual), null, { timeout: 15000 });
+await page.waitForTimeout(550);
+notes.boss = await page.evaluate(() => {
+  const boss = window.__MAPLES_GAME__.boss;
+  return { spawned: Boolean(boss), imported: Boolean(boss?.assetVisual), kind: boss?.assetKind ?? null, hp: boss?.hp ?? null, animation: boss?.assetAnimator?.key ?? null };
+});
 if (!notes.boss.spawned) errors.push('Boss did not spawn');
+if (!notes.boss.imported || notes.boss.kind !== 'demon') errors.push('Imported Thornmaw demon visual did not attach');
 await page.screenshot({ path: path.join(out, '05-boss-reveal.png') });
 await page.waitForTimeout(500);
 
 await context.close();
 
-// Mobile layout smoke test.
+// Mobile layout + asset-load smoke test.
 const mobile = await browser.newContext({
   viewport: { width: 390, height: 844 },
   isMobile: true,
@@ -98,9 +125,17 @@ const mp = await mobile.newPage();
 mp.on('pageerror', error => errors.push(`mobile pageerror: ${error.message}`));
 await mp.goto('http://127.0.0.1:4173', { waitUntil: 'networkidle' });
 await mp.waitForFunction(() => Boolean(window.__MAPLES_GAME__));
-await mp.waitForTimeout(900);
-notes.mobileControls = await mp.locator('#mobile-controls').evaluate(el => getComputedStyle(el).display);
-if (notes.mobileControls === 'none') errors.push('Mobile controls are hidden on touch viewport');
+await mp.waitForFunction(() => Boolean(window.__MAPLES_GAME__.player.assetVisual), null, { timeout: 15000 });
+await mp.waitForTimeout(400);
+notes.mobile = await mp.evaluate(() => ({
+  controls: getComputedStyle(document.querySelector('#mobile-controls')).display,
+  quality: window.__MAPLES_GAME__.quality,
+  heroImported: Boolean(window.__MAPLES_GAME__.player.assetVisual),
+  failures: [...(window.__MAPLES_GAME__.assetVisualManager?.failures || [])]
+}));
+if (notes.mobile.controls === 'none') errors.push('Mobile controls are hidden on touch viewport');
+if (!notes.mobile.heroImported) errors.push('Imported Rowan visual failed on mobile');
+if (notes.mobile.failures.length) errors.push(`Mobile asset failures: ${notes.mobile.failures.join('; ')}`);
 await mp.screenshot({ path: path.join(out, '06-mobile.png') });
 await mobile.close();
 await browser.close();

@@ -182,7 +182,6 @@ export class World {
     );
     ring.name = 'portal-ring';
     ring.position.y = 2.7;
-    ring.rotation.x = Math.PI / 2;
     ring.castShadow = true;
     this.portal.add(ring);
 

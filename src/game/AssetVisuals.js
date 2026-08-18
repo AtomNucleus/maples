@@ -160,10 +160,17 @@ function hideProceduralPlayer(player) {
 }
 
 function hideProceduralEnemy(enemy) {
-  for (const child of enemy.root.children) {
+  enemy.proceduralVisualFallback ||= [];
+  for (const child of [...enemy.root.children]) {
     if (child === enemy.telegraph || child.userData?.assetVisual) continue;
     const isShadow = child.isMesh && child.geometry?.type === 'CircleGeometry';
-    child.visible = isShadow;
+    if (isShadow) {
+      child.visible = true;
+      continue;
+    }
+    child.visible = false;
+    enemy.proceduralVisualFallback.push(child);
+    enemy.root.remove(child);
   }
   enemy.telegraph.visible = true;
 }

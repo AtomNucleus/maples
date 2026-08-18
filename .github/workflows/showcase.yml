@@ -1,8 +1,6 @@
 name: Showcase build and anonymous deploy
 
 on:
-  push:
-    branches: ["agent/emberfall-showcase"]
   pull_request:
     branches: ["main"]
   workflow_dispatch:
@@ -44,6 +42,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: emberfall-showcase
-          path: artifacts/
+          path: |
+            artifacts/
+            dist/
           if-no-files-found: warn
           retention-days: 7

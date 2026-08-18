@@ -23,7 +23,7 @@ page.on('console', msg => {
   if (msg.type() === 'error' && !msg.text().includes('favicon')) errors.push(`console: ${msg.text()}`);
 });
 
-await page.goto('http://127.0.0.1:4173', { waitUntil: 'networkidle' });
+await page.goto('http://127.0.0.1:4173/?quality=high&capture=1', { waitUntil: 'networkidle' });
 await page.waitForFunction(() => Boolean(window.__MAPLES_GAME__));
 await page.waitForTimeout(1600);
 notes.boot = await page.evaluate(() => ({
@@ -33,6 +33,7 @@ notes.boot = await page.evaluate(() => ({
   renderer: window.__MAPLES_GAME__.renderer.info.render
 }));
 if (notes.boot.enemies < 5) errors.push(`Expected at least 5 enemies, got ${notes.boot.enemies}`);
+if (notes.boot.quality !== 'high') errors.push(`Expected high showcase quality, got ${notes.boot.quality}`);
 await page.screenshot({ path: path.join(out, '01-intro.png') });
 
 await page.locator('#enter-btn').click();
@@ -44,7 +45,7 @@ await page.evaluate(() => {
   g.cameraYaw = Math.PI;
   g.player.setPosition(0, 0, 5.2);
   const e = g.enemies.find(x => !x.dead && !x.isBoss);
-  e.position.set(0, 0, 2.9);
+  e.position.set(0, 0, 3.55);
   e.state = 'idle'; e.stateTime = 0;
 });
 await page.keyboard.down('w'); await page.waitForTimeout(100); await page.keyboard.up('w');
@@ -53,20 +54,20 @@ await page.waitForTimeout(155);
 await page.screenshot({ path: path.join(out, '02-melee-impact.png') });
 await page.waitForTimeout(300);
 await page.mouse.click(640, 360);
-await page.waitForTimeout(165);
+await page.waitForTimeout(230);
 await page.mouse.click(640, 360);
-await page.waitForTimeout(220);
+await page.waitForTimeout(520);
 await page.screenshot({ path: path.join(out, '03-combo-finisher.png') });
 
 // Spell capture.
 await page.evaluate(() => {
   const g = window.__MAPLES_GAME__;
-  g.player.state = 'idle'; g.player.stateTime = 0; g.player.facing = Math.PI; g.player.root.rotation.y = Math.PI;
+  g.player.state = 'idle'; g.player.stateTime = 0; g.player.setPosition(0,0,5.2); g.player.facing = Math.PI; g.player.root.rotation.y = Math.PI;
   const target = g.enemies.find(x => !x.dead && !x.isBoss);
-  if (target) { target.position.set(0, 0, -1.2); target.state = 'idle'; target.stateTime = 0; }
+  if (target) { target.position.set(0, 0, 1.7); target.state = 'idle'; target.stateTime = 0; }
 });
 await page.keyboard.press('q');
-await page.waitForTimeout(150);
+await page.waitForTimeout(235);
 await page.screenshot({ path: path.join(out, '04-ember-lance.png') });
 await page.waitForTimeout(450);
 

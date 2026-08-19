@@ -130,7 +130,7 @@ export class Character {
     this.stateTime+=dt;
 
     const forward=new V(Math.sin(cameraYaw),0,Math.cos(cameraYaw));
-    const right=new V(-Math.cos(cameraYaw),0,Math.sin(cameraYaw));
+    const right=new V(Math.cos(cameraYaw),0,-Math.sin(cameraYaw));
     const desired=forward.multiplyScalar(move.y).add(right.multiplyScalar(move.x));
     if(desired.lengthSq()>1) desired.normalize();
 

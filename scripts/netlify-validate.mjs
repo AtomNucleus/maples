@@ -33,8 +33,11 @@ const preview = spawn(
 
 try {
   await ready();
-  await run('node', ['tests/visual-stage-smoke.mjs']);
-  console.log('VISUAL BOOT LOCOMOTION STAGE PASS');
+  await run('npm', ['run', 'test:movement']);
+  console.log('MOVEMENT SUITE PASS');
+  await run('node', ['scripts/visual-netlify.mjs']);
+  console.log('VISUAL SUITE PASS');
+  console.log('NETLIFY SHOWCASE VALIDATION PASS');
 } finally {
   try { process.kill(-preview.pid, 'SIGTERM'); }
   catch { preview.kill('SIGTERM'); }

@@ -1,0 +1,602 @@
+[
+  {
+    "file": "public/assets/characters/rowan-knight.glb",
+    "bytes": 3659532,
+    "declaredLength": 3659532,
+    "bounds": {
+      "min": [
+        -0.9712533354759216,
+        -1.1218448877334595,
+        -0.542184591293335
+      ],
+      "max": [
+        0.9712533354759216,
+        2.3145079612731934,
+        0.7114353179931641
+      ]
+    },
+    "animations": [
+      "1H_Melee_Attack_Chop",
+      "1H_Melee_Attack_Slice_Diagonal",
+      "1H_Melee_Attack_Slice_Horizontal",
+      "1H_Melee_Attack_Stab",
+      "1H_Ranged_Aiming",
+      "1H_Ranged_Reload",
+      "1H_Ranged_Shoot",
+      "1H_Ranged_Shooting",
+      "2H_Melee_Attack_Chop",
+      "2H_Melee_Attack_Slice",
+      "2H_Melee_Attack_Spin",
+      "2H_Melee_Attack_Spinning",
+      "2H_Melee_Attack_Stab",
+      "2H_Melee_Idle",
+      "2H_Ranged_Aiming",
+      "2H_Ranged_Reload",
+      "2H_Ranged_Shoot",
+      "2H_Ranged_Shooting",
+      "Block",
+      "Block_Attack",
+      "Block_Hit",
+      "Blocking",
+      "Cheer",
+      "Death_A",
+      "Death_A_Pose",
+      "Death_B",
+      "Death_B_Pose",
+      "Dodge_Backward",
+      "Dodge_Forward",
+      "Dodge_Left",
+      "Dodge_Right",
+      "Dualwield_Melee_Attack_Chop",
+      "Dualwield_Melee_Attack_Slice",
+      "Dualwield_Melee_Attack_Stab",
+      "Hit_A",
+      "Hit_B",
+      "Idle",
+      "Interact",
+      "Jump_Full_Long",
+      "Jump_Full_Short",
+      "Jump_Idle",
+      "Jump_Land",
+      "Jump_Start",
+      "Lie_Down",
+      "Lie_Idle",
+      "Lie_Pose",
+      "Lie_StandUp",
+      "PickUp",
+      "Running_A",
+      "Running_B",
+      "Running_Strafe_Left",
+      "Running_Strafe_Right",
+      "Sit_Chair_Down",
+      "Sit_Chair_Idle",
+      "Sit_Chair_Pose",
+      "Sit_Chair_StandUp",
+      "Sit_Floor_Down",
+      "Sit_Floor_Idle",
+      "Sit_Floor_Pose",
+      "Sit_Floor_StandUp",
+      "Spellcast_Long",
+      "Spellcast_Raise",
+      "Spellcast_Shoot",
+      "Spellcasting",
+      "T-Pose",
+      "Throw",
+      "Unarmed_Idle",
+      "Unarmed_Melee_Attack_Kick",
+      "Unarmed_Melee_Attack_Punch_A",
+      "Unarmed_Melee_Attack_Punch_B",
+      "Unarmed_Pose",
+      "Use_Item",
+      "Walking_A",
+      "Walking_B",
+      "Walking_Backwards",
+      "Walking_C"
+    ],
+    "nodes": [
+      "1H_Sword_Offhand",
+      "Badge_Shield",
+      "Rectangle_Shield",
+      "Round_Shield",
+      "Spike_Shield",
+      "handslot.l",
+      "hand.l",
+      "wrist.l",
+      "lowerarm.l",
+      "upperarm.l",
+      "1H_Sword",
+      "2H_Sword",
+      "handslot.r",
+      "hand.r",
+      "wrist.r",
+      "lowerarm.r",
+      "upperarm.r",
+      "Knight_Helmet",
+      "head",
+      "Knight_Cape",
+      "chest",
+      "spine",
+      "toes.l",
+      "foot.l",
+      "lowerleg.l",
+      "upperleg.l",
+      "toes.r",
+      "foot.r",
+      "lowerleg.r",
+      "upperleg.r",
+      "hips",
+      "kneeIK.l",
+      "heelIK.l",
+      "IK-foot.l",
+      "control-foot-roll.l",
+      "IK-toe.l",
+      "control-heel-roll.l",
+      "control-toe-roll.l",
+      "kneeIK.r",
+      "heelIK.r",
+      "IK-foot.r",
+      "control-foot-roll.r",
+      "IK-toe.r",
+      "control-heel-roll.r",
+      "control-toe-roll.r",
+      "elbowIK.l",
+      "handIK.l",
+      "elbowIK.r",
+      "handIK.r",
+      "root",
+      "Knight_ArmLeft",
+      "Knight_ArmRight",
+      "Knight_Body",
+      "Knight_Head",
+      "Knight_LegLeft",
+      "Knight_LegRight",
+      "Rig"
+    ],
+    "meshes": [
+      "Cube.125",
+      "Cube.003",
+      "Cylinder.280",
+      "Cylinder.005",
+      "Cylinder.010",
+      "Cylinder.022",
+      "Cube.11839",
+      "Cube.12993",
+      "Cube.124",
+      "Plane.004",
+      "Cube.126",
+      "PrototypePete_body.020",
+      "PrototypePete_head.001",
+      "Cube.128",
+      "Cube.127"
+    ],
+    "skins": [
+      "Rig"
+    ]
+  },
+  {
+    "file": "public/assets/characters/rowan-sword.glb",
+    "bytes": 28420,
+    "declaredLength": 28420,
+    "bounds": {
+      "min": [
+        -0.3855740427970886,
+        -0.4936923086643219,
+        -0.10822990536689758
+      ],
+      "max": [
+        0.3855740427970886,
+        3.858828067779541,
+        0.12032490223646164
+      ]
+    },
+    "animations": [],
+    "nodes": [
+      "Sword"
+    ],
+    "meshes": [
+      "Cylinder"
+    ],
+    "skins": []
+  },
+  {
+    "file": "public/assets/monsters/briar-bat.glb",
+    "bytes": 244064,
+    "declaredLength": 244064,
+    "bounds": {
+      "min": [
+        -1.2841073274612427,
+        -0.13947844505310059,
+        -2.8839073181152344
+      ],
+      "max": [
+        1.4490793943405151,
+        4.50594425201416,
+        1.4300297498703003
+      ]
+    },
+    "animations": [
+      "BatArmature|BatArmature|Bat_Attack",
+      "BatArmature|BatArmature|Bat_Attack2",
+      "BatArmature|BatArmature|Bat_Death",
+      "BatArmature|BatArmature|Bat_Flying",
+      "BatArmature|BatArmature|Bat_Hit"
+    ],
+    "nodes": [
+      "Nose_end",
+      "Nose",
+      "Eyes",
+      "Face",
+      "Head",
+      "Neck",
+      "Wing4.L_end",
+      "Wing4.L",
+      "Wing3.L",
+      "Wing2.L",
+      "Wing1.L",
+      "Shoulder.L",
+      "Wing4.R_end",
+      "Wing4.R",
+      "Wing3.R",
+      "Wing2.R",
+      "Wing1.R",
+      "Shoulder.R",
+      "Body",
+      "Feet.L_end",
+      "Feet.L",
+      "LowerLeg.L",
+      "UpperLeg.L",
+      "Feet.R_end",
+      "Feet.R",
+      "LowerLeg.R",
+      "UpperLeg.R",
+      "BodyRoot",
+      "Root",
+      "Bat",
+      "BatArmature"
+    ],
+    "meshes": [
+      "Cylinder",
+      "Cylinder.001"
+    ],
+    "skins": [
+      "BatArmature"
+    ]
+  },
+  {
+    "file": "public/assets/monsters/briar-ghost.glb",
+    "bytes": 288500,
+    "declaredLength": 288500,
+    "bounds": {
+      "min": [
+        -2.76387095451355,
+        0.28337180614471436,
+        -0.8488379120826721
+      ],
+      "max": [
+        2.7359254360198975,
+        3.38424015045166,
+        0.6851815581321716
+      ]
+    },
+    "animations": [
+      "Death",
+      "Fast_Flying",
+      "Flying_Idle",
+      "Headbutt",
+      "HitReact",
+      "No",
+      "Punch",
+      "Yes"
+    ],
+    "nodes": [
+      "Head",
+      "Neck",
+      "Middle3.L",
+      "Middle2.L",
+      "Middle1.L",
+      "Pinky3.L",
+      "Pinky2.L",
+      "Pinky1.L",
+      "Index3.L",
+      "Index2.L",
+      "Index1.L",
+      "Thumb3.L",
+      "Thumb2.L",
+      "Thumb1.L",
+      "LowerArm.L",
+      "UpperArm.L",
+      "Shoulder.L",
+      "Middle3.R",
+      "Middle2.R",
+      "Middle1.R",
+      "Pinky3.R",
+      "Pinky2.R",
+      "Pinky1.R",
+      "Index3.R",
+      "Index2.R",
+      "Index1.R",
+      "Thumb3.R",
+      "Thumb2.R",
+      "Thumb1.R",
+      "LowerArm.R",
+      "UpperArm.R",
+      "Shoulder.R",
+      "Torso",
+      "Body4",
+      "Body3",
+      "Body2",
+      "Body1",
+      "Root",
+      "Ghost_Skull"
+    ],
+    "meshes": [
+      "Cube.001"
+    ],
+    "skins": [
+      "CharacterArmature"
+    ]
+  },
+  {
+    "file": "public/assets/monsters/briar-skeleton.glb",
+    "bytes": 189404,
+    "declaredLength": 189404,
+    "bounds": {
+      "min": [
+        -2.304621696472168,
+        0.019312143325805664,
+        -0.6366950273513794
+      ],
+      "max": [
+        2.299955368041992,
+        5.108909606933594,
+        0.6924700140953064
+      ]
+    },
+    "animations": [
+      "SkeletonArmature|SkeletonArmature|Skeleton_Attack",
+      "SkeletonArmature|SkeletonArmature|Skeleton_Death",
+      "SkeletonArmature|SkeletonArmature|Skeleton_Idle",
+      "SkeletonArmature|SkeletonArmature|Skeleton_Running",
+      "SkeletonArmature|SkeletonArmature|Skeleton_Spawn"
+    ],
+    "nodes": [
+      "Head_end",
+      "Head",
+      "Neck",
+      "Torso",
+      "L.DownLeg_end",
+      "L.DownLeg",
+      "L.UpperLeg",
+      "R.DownLeg_end",
+      "R.DownLeg",
+      "R.UpperLeg",
+      "L.DownLeg.001_end",
+      "L.DownLeg.001",
+      "L.UpperLeg.001",
+      "R.DownLeg.001_end",
+      "R.DownLeg.001",
+      "R.UpperLeg.001",
+      "Hips",
+      "Cylinder.001",
+      "SkeletonArmature"
+    ],
+    "meshes": [
+      "Cylinder.001"
+    ],
+    "skins": [
+      "SkeletonArmature"
+    ]
+  },
+  {
+    "file": "public/assets/monsters/thornmaw-demon.glb",
+    "bytes": 554308,
+    "declaredLength": 554308,
+    "bounds": {
+      "min": [
+        -2.327918767929077,
+        -0.015488493256270885,
+        -1.3295974731445312
+      ],
+      "max": [
+        2.327918767929077,
+        3.104957342147827,
+        0.9904832243919373
+      ]
+    },
+    "animations": [
+      "Death",
+      "Duck",
+      "HitReact",
+      "Idle",
+      "Jump",
+      "Jump_Idle",
+      "Jump_Land",
+      "No",
+      "Punch",
+      "Run",
+      "Walk",
+      "Wave",
+      "Weapon",
+      "Yes"
+    ],
+    "nodes": [
+      "Foot.L",
+      "Head",
+      "Neck",
+      "Pinky3.L",
+      "Pinky2.L",
+      "Pinky1.L",
+      "Middle3.L",
+      "Middle2.L",
+      "Middle1.L",
+      "Index3.L",
+      "Index2.L",
+      "Index1.L",
+      "Thumb2.L",
+      "Thumb1.L",
+      "LowerArm.L",
+      "UpperArm.L",
+      "Shoulder.L",
+      "Pinky3.R",
+      "Pinky2.R",
+      "Pinky1.R",
+      "Middle3.R",
+      "Middle2.R",
+      "Middle1.R",
+      "Index3.R",
+      "Index2.R",
+      "Index1.R",
+      "Thumb2.R",
+      "Thumb1.R",
+      "LowerArm.R",
+      "UpperArm.R",
+      "Shoulder.R",
+      "Torso",
+      "Abdomen",
+      "Hips",
+      "LowerLeg.L",
+      "UpperLeg.L",
+      "LowerLeg.R",
+      "UpperLeg.R",
+      "Body",
+      "PoleTarget.L",
+      "Foot.R",
+      "PoleTarget.R",
+      "Root",
+      "Demon",
+      "Trident"
+    ],
+    "meshes": [
+      "Cube.098",
+      "Cylinder.005"
+    ],
+    "skins": [
+      "CharacterArmature"
+    ]
+  },
+  {
+    "file": "public/assets/environment/glade-arch.glb",
+    "bytes": 69124,
+    "declaredLength": 69124,
+    "bounds": {
+      "min": [
+        -2.000000238418579,
+        0,
+        -0.4999999701976776
+      ],
+      "max": [
+        2,
+        4,
+        0.5000005960464478
+      ]
+    },
+    "animations": [],
+    "nodes": [
+      "wall_arched"
+    ],
+    "meshes": [
+      "Cube.16047"
+    ],
+    "skins": []
+  },
+  {
+    "file": "public/assets/environment/ruin-pillar.glb",
+    "bytes": 62460,
+    "declaredLength": 62460,
+    "bounds": {
+      "min": [
+        -1.1159993410110474,
+        0,
+        -0.7499999403953552
+      ],
+      "max": [
+        1.116003155708313,
+        4,
+        0.9601638317108154
+      ]
+    },
+    "animations": [],
+    "nodes": [
+      "pillar_decorated"
+    ],
+    "meshes": [
+      "Cube.16005"
+    ],
+    "skins": []
+  },
+  {
+    "file": "public/assets/environment/ruin-wall-broken.glb",
+    "bytes": 69276,
+    "declaredLength": 69276,
+    "bounds": {
+      "min": [
+        -2,
+        0,
+        -0.4999999701976776
+      ],
+      "max": [
+        2,
+        4,
+        0.4999999701976776
+      ]
+    },
+    "animations": [],
+    "nodes": [
+      "wall_broken"
+    ],
+    "meshes": [
+      "Cube.16051"
+    ],
+    "skins": []
+  },
+  {
+    "file": "public/assets/environment/shrine-stairs.glb",
+    "bytes": 43372,
+    "declaredLength": 43372,
+    "bounds": {
+      "min": [
+        -3.500000238418579,
+        0,
+        -1.092784742695585e-7
+      ],
+      "max": [
+        3.5,
+        5.099999904632568,
+        4
+      ]
+    },
+    "animations": [],
+    "nodes": [
+      "stairs_wide"
+    ],
+    "meshes": [
+      "Cube.16017"
+    ],
+    "skins": []
+  },
+  {
+    "file": "public/assets/environment/torch-lit.glb",
+    "bytes": 31244,
+    "declaredLength": 31244,
+    "bounds": {
+      "min": [
+        -0.2751416563987732,
+        -0.395045667886734,
+        -0.2751416862010956
+      ],
+      "max": [
+        0.2751416862010956,
+        0.7307469248771667,
+        0.2751415967941284
+      ]
+    },
+    "animations": [],
+    "nodes": [
+      "torch_lit"
+    ],
+    "meshes": [
+      "Cylinder.021"
+    ],
+    "skins": []
+  }
+]

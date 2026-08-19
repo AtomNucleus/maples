@@ -1,0 +1,53 @@
+name: Showcase build and anonymous deploy
+
+on:
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+concurrency:
+  group: emberfall-showcase-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  showcase:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Production build
+        run: npm run build
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Launch production preview
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > preview.log 2>&1 &
+          for i in {1..40}; do
+            if curl -fsS http://127.0.0.1:4173 >/dev/null; then exit 0; fi
+            sleep 0.5
+          done
+          cat preview.log
+          exit 1
+      - name: Capture and validate showcase
+        run: npm run test:visual
+      - name: Anonymous Netlify deploy
+        run: |
+          npx --yes netlify-cli@latest deploy --allow-anonymous --dir=dist --json | tee artifacts/netlify.json
+      - name: Save preview log
+        if: always()
+        run: cp preview.log artifacts/preview.log || true
+      - name: Upload showcase evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emberfall-showcase
+          path: |
+            artifacts/
+            dist/
+          if-no-files-found: warn
+          retention-days: 7

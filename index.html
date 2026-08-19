@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#0b1718" />
+    <meta name="description" content="Emberfall — a stylized Three.js action RPG vertical slice." />
+    <title>Emberfall — Maples</title>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="game"></canvas>
+      <div id="hud">
+        <div class="topbar glass">
+          <div class="crest"><span>IV</span></div>
+          <div class="identity">
+            <div class="eyebrow">WARDEN OF LUMENWOOD</div>
+            <div class="name-row"><strong>Rowan</strong><span id="level">Lv. 7</span></div>
+            <div class="bars">
+              <div class="bar hp"><i id="hp-fill"></i><b id="hp-text">100 / 100</b></div>
+              <div class="bar mana"><i id="mana-fill"></i></div>
+              <div class="bar xp"><i id="xp-fill"></i></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="quest glass">
+          <div class="quest-label">ACTIVE QUEST</div>
+          <div class="quest-title">The Briarbound</div>
+          <div class="quest-copy" id="quest-copy">Drive the corrupted creatures from the Sunken Glade.</div>
+          <div class="quest-progress"><span id="quest-progress">0 / 8 defeated</span><i><b id="quest-fill"></b></i></div>
+        </div>
+
+        <div id="boss-ui" class="boss-ui hidden">
+          <div class="boss-kicker">ANCIENT WARDEN</div>
+          <div class="boss-name">Thornmaw</div>
+          <div class="boss-bar"><i id="boss-fill"></i></div>
+        </div>
+
+        <div id="combo" class="combo hidden"><strong>3</strong><span>COMBO</span></div>
+        <div id="toast" class="toast"></div>
+        <div id="damage-layer"></div>
+
+        <div class="skills glass">
+          <div class="skill"><kbd>1</kbd><div class="skill-icon slash">✦</div><span>Arc Slash</span><em id="cd-attack"></em></div>
+          <div class="skill"><kbd>Q</kbd><div class="skill-icon ember">◆</div><span>Ember Lance</span><em id="cd-spell"></em></div>
+          <div class="skill"><kbd>SPACE</kbd><div class="skill-icon dodge">➤</div><span>Dash</span><em id="cd-dodge"></em></div>
+        </div>
+
+        <div class="help glass"><span>WASD</span> move <span>Mouse</span> camera <span>LMB</span> attack <span>Q</span> spell <span>Space</span> dash</div>
+        <div class="crosshair"><i></i></div>
+        <div class="vignette"></div>
+        <div id="damage-flash"></div>
+
+        <div id="intro" class="intro">
+          <div class="intro-line"></div>
+          <div class="intro-kicker">LUMENWOOD · CHAPTER I</div>
+          <h1>EMBERFALL</h1>
+          <p>The old forest remembers every oath.</p>
+          <button id="enter-btn">Enter the Glade</button>
+          <small>Click to capture the camera · Headphones recommended</small>
+        </div>
+
+        <div id="victory" class="victory hidden">
+          <div class="victory-kicker">GLADE RESTORED</div>
+          <h2>Thornmaw has fallen.</h2>
+          <p>The briars loosen their grip. For now.</p>
+          <button id="restart-btn">Play Again</button>
+        </div>
+
+        <div id="mobile-controls" class="mobile-controls">
+          <div id="joystick" class="joystick"><div id="joystick-knob"></div></div>
+          <div class="mobile-actions">
+            <button data-action="spell" class="m-spell">◆</button>
+            <button data-action="dodge" class="m-dodge">➤</button>
+            <button data-action="attack" class="m-attack">✦</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"
+        }
+      }
+    </script>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

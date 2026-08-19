@@ -1,15 +1,18 @@
 {
   "name": "maples-emberfall",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
+    "test": "npm run test:dm",
+    "test:dm": "node tests/dm-core.mjs",
     "test:visual": "node tests/visual-smoke.mjs"
   },
   "dependencies": {
+    "@huggingface/transformers": "4.2.0",
     "three": "^0.179.1"
   },
   "devDependencies": {

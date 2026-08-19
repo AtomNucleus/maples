@@ -97,7 +97,7 @@ function dot(a, b) {
 await ensurePreview();
 const browser = await chromium.launch({
   headless: true,
-  args: ['--use-gl=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist'],
+  args: ['--no-sandbox', '--disable-setuid-sandbox', '--use-gl=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist'],
 });
 
 const report = { desktop: {}, mobile: {} };

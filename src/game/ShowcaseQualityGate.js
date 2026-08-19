@@ -111,8 +111,8 @@ function installNatureWindLayer(game) {
         const kind = item.userData.kind;
         const phase = item.userData.phase || i * .73;
         const micro = kind === 'pine' ? .0045 : kind === 'grass' ? .017 : .010;
+        // NatureAssets resets Z from the authored base pose every update, so this micro-gust stays bounded.
         item.rotation.z += Math.sin(t * 2.6 + phase * 1.9) * micro * gust;
-        item.rotation.x += Math.sin(t * 1.55 + phase * 1.2) * micro * .18;
       }
     };
     game.showcaseNatureWindReady = true;

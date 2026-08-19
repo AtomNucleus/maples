@@ -207,7 +207,7 @@ try {
       const el = document.querySelector(selector);
       if (!el) return null;
       const r = el.getBoundingClientRect();
-      return { x: r.x, width: r.width, right: r.right };
+      return { x: r.x, width: r.width, height: r.height, right: r.right };
     };
     return { topbar: rect('.topbar'), quest: rect('.quest'), viewport: innerWidth };
   });

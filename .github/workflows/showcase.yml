@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   showcase:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4

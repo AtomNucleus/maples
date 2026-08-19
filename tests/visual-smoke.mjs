@@ -31,6 +31,7 @@ await page.waitForFunction(() => {
     g.enemies.filter(e => e.assetVisual).length >= 5 &&
     g.environmentAssetManager?.ready && g.environmentAssetManager?.count >= 14 &&
     g.natureAssetManager?.ready && g.natureAssetManager?.count >= 70 &&
+    g.animationPolishManager?.ready &&
     document.querySelector('#enter-btn')?.dataset.ready === 'true';
 }, null, { timeout: 25000 });
 await page.waitForTimeout(300);
@@ -51,6 +52,7 @@ notes.boot = await page.evaluate(() => {
     natureReady: Boolean(g.natureAssetManager?.ready),
     naturePieces: g.natureAssetManager?.count ?? 0,
     natureFailures: [...(g.natureAssetManager?.failures || [])],
+    animationPolishReady: Boolean(g.animationPolishManager?.ready),
     sceneChildren: g.scene.children.length,
   };
 });
@@ -63,11 +65,36 @@ if (!notes.boot.environmentReady || notes.boot.environmentPieces < 14) errors.pu
 if (notes.boot.environmentFailures.length) errors.push(`Environment asset failures: ${notes.boot.environmentFailures.join('; ')}`);
 if (!notes.boot.natureReady || notes.boot.naturePieces < 70) errors.push(`Nature asset layer incomplete: ${notes.boot.naturePieces} pieces`);
 if (notes.boot.natureFailures.length) errors.push(`Nature asset failures: ${notes.boot.natureFailures.join('; ')}`);
+if (!notes.boot.animationPolishReady) errors.push('Animation polish director did not install');
 if (notes.boot.quality !== 'high') errors.push(`Expected high showcase quality, got ${notes.boot.quality}`);
 await page.screenshot({ path: path.join(out, '01-intro.png') });
 
 await page.locator('#enter-btn').click();
-await page.waitForTimeout(220);
+await page.waitForFunction(() => window.__MAPLES_GAME__.animationPolishManager?.playerReady, null, { timeout: 10000 });
+await page.waitForTimeout(100);
+
+// Exercise real locomotion long enough to verify animation blending, secondary motion initialization, and footstep particles.
+await page.keyboard.down('w');
+await page.waitForTimeout(720);
+notes.locomotion = await page.evaluate(() => {
+  const g = window.__MAPLES_GAME__;
+  return {
+    animation: g.player.assetAnimator?.key ?? null,
+    speed: g.player.speed,
+    playerReady: Boolean(g.animationPolishManager?.playerReady),
+    trailReady: Boolean(g.animationPolishManager?.trailReady),
+    secondaryMotionReady: Boolean(g.animationPolishManager?.secondaryMotionReady),
+    footstepEvents: g.animationPolishManager?.footstepEvents ?? 0,
+    activeFx: g.fx.effects.length,
+  };
+});
+await page.screenshot({ path: path.join(out, '01b-locomotion.png') });
+await page.keyboard.up('w');
+if (!['walk', 'run'].includes(notes.locomotion.animation)) errors.push(`Imported player rig did not enter locomotion animation: ${notes.locomotion.animation}`);
+if (!notes.locomotion.playerReady) errors.push('Animation polish did not initialize on imported Rowan');
+if (!notes.locomotion.trailReady) errors.push('Animation polish could not resolve Rowan sword for motion trail');
+if (!notes.locomotion.secondaryMotionReady) errors.push('Animation polish could not resolve cape/hair secondary motion gear');
+if (notes.locomotion.footstepEvents < 1) errors.push('Locomotion did not emit any animation-driven footstep events');
 
 // Stage one imported creature in the real melee cone, then capture the exact animation-driven damage event.
 await page.evaluate(() => {
@@ -75,10 +102,12 @@ await page.evaluate(() => {
   g.cameraYaw = Math.PI;
   g.player.setPosition(0, 0, 5.2);
   g.player.state = 'idle'; g.player.stateTime = 0; g.player.comboDeadline = 0;
+  g.player.velocity.set(0, 0, 0);
   const e = g.enemies.find(x => !x.dead && !x.isBoss && x.assetVisual);
   e.position.set(0, 0, 3.45);
   e.state = 'idle'; e.stateTime = 0; e.velocity.set(0,0,0);
 });
+await page.waitForTimeout(80);
 await page.mouse.click(640, 360);
 await page.waitForFunction(() => {
   const p = window.__MAPLES_GAME__.player;
@@ -87,8 +116,11 @@ await page.waitForFunction(() => {
 notes.melee = await page.evaluate(() => ({
   playerAnimation: window.__MAPLES_GAME__.player.assetAnimator?.key ?? null,
   activeFx: window.__MAPLES_GAME__.fx.effects.length,
+  trailActive: Boolean(window.__MAPLES_GAME__.animationPolishManager?.trailActive),
+  trailSamples: window.__MAPLES_GAME__.animationPolishManager?.trailSamples ?? 0,
 }));
 if (notes.melee.playerAnimation !== 'attack0') errors.push(`Imported player rig did not enter attack0 animation: ${notes.melee.playerAnimation}`);
+if (!notes.melee.trailActive || notes.melee.trailSamples < 2) errors.push(`Animation-driven sword ribbon was not active at hit frame: ${notes.melee.trailSamples} samples`);
 await page.screenshot({ path: path.join(out, '02-melee-impact.png') });
 
 // Advance through the authentic buffered combo and capture the third strike at its hit frame.
@@ -104,11 +136,14 @@ for (const expectedCombo of [1, 2]) {
       playerAnimation: window.__MAPLES_GAME__.player.assetAnimator?.key ?? null,
       comboIndex: window.__MAPLES_GAME__.player.comboIndex,
       activeFx: window.__MAPLES_GAME__.fx.effects.length,
+      trailActive: Boolean(window.__MAPLES_GAME__.animationPolishManager?.trailActive),
+      trailSamples: window.__MAPLES_GAME__.animationPolishManager?.trailSamples ?? 0,
     }));
     await page.screenshot({ path: path.join(out, '03-combo-finisher.png') });
   }
 }
 if (notes.finisher?.playerAnimation !== 'attack2') errors.push(`Imported player rig did not enter finisher animation: ${notes.finisher?.playerAnimation}`);
+if (!notes.finisher?.trailActive || notes.finisher?.trailSamples < 2) errors.push('Combo finisher did not carry the warm weapon motion ribbon through its hit frame');
 
 // Put a target farther downrange and capture Ember Lance while the projectile is genuinely alive.
 await page.waitForFunction(() => window.__MAPLES_GAME__.player.state === 'idle', null, { timeout: 10000 });
@@ -141,7 +176,8 @@ await page.evaluate(() => {
 });
 await page.waitForFunction(() => {
   const g = window.__MAPLES_GAME__;
-  return Boolean(g.boss?.assetVisual) && g.boss.state === 'spawn' && g.boss.stateTime > .35 && g.bossRevealTimer > 0;
+  return Boolean(g.boss?.assetVisual) && g.boss.state === 'spawn' && g.boss.stateTime > .35 && g.bossRevealTimer > 0 &&
+    g.animationPolishManager?.bossPolished;
 }, null, { timeout: 20000 });
 notes.boss = await page.evaluate(() => {
   const g = window.__MAPLES_GAME__;
@@ -150,10 +186,13 @@ notes.boss = await page.evaluate(() => {
     spawned: Boolean(boss), imported: Boolean(boss?.assetVisual), kind: boss?.assetKind ?? null,
     hp: boss?.hp ?? null, animation: boss?.assetAnimator?.key ?? null,
     revealTimer: g.bossRevealTimer, state: boss?.state ?? null,
+    animationPolished: Boolean(g.animationPolishManager?.bossPolished),
+    enemiesPolished: g.animationPolishManager?.enemyPolished ?? 0,
   };
 });
 if (!notes.boss.spawned) errors.push('Boss did not spawn');
 if (!notes.boss.imported || notes.boss.kind !== 'demon') errors.push('Imported Thornmaw demon visual did not attach');
+if (!notes.boss.animationPolished) errors.push('Thornmaw did not initialize boss animation polish');
 await page.screenshot({ path: path.join(out, '05-boss-reveal.png') });
 await context.close();
 
@@ -171,7 +210,7 @@ await mp.waitForFunction(() => Boolean(window.__MAPLES_GAME__));
 await mp.waitForFunction(() => {
   const g = window.__MAPLES_GAME__;
   return Boolean(g.player.assetVisual) && Boolean(g.environmentAssetManager?.ready) && Boolean(g.natureAssetManager?.ready) &&
-    document.querySelector('#enter-btn')?.dataset.ready === 'true';
+    g.animationPolishManager?.ready && document.querySelector('#enter-btn')?.dataset.ready === 'true';
 }, null, { timeout: 20000 });
 notes.mobile = await mp.evaluate(() => ({
   controls: getComputedStyle(document.querySelector('#mobile-controls')).display,
@@ -179,6 +218,7 @@ notes.mobile = await mp.evaluate(() => ({
   heroImported: Boolean(window.__MAPLES_GAME__.player.assetVisual),
   environmentPieces: window.__MAPLES_GAME__.environmentAssetManager?.count ?? 0,
   naturePieces: window.__MAPLES_GAME__.natureAssetManager?.count ?? 0,
+  animationPolishReady: Boolean(window.__MAPLES_GAME__.animationPolishManager?.ready),
   failures: [
     ...(window.__MAPLES_GAME__.assetVisualManager?.failures || []),
     ...(window.__MAPLES_GAME__.environmentAssetManager?.failures || []),
@@ -189,6 +229,7 @@ if (notes.mobile.controls === 'none') errors.push('Mobile controls are hidden on
 if (!notes.mobile.heroImported) errors.push('Imported Rowan visual failed on mobile');
 if (notes.mobile.environmentPieces < 14) errors.push(`Mobile environment asset layer incomplete: ${notes.mobile.environmentPieces}`);
 if (notes.mobile.naturePieces < 35) errors.push(`Mobile nature layer incomplete: ${notes.mobile.naturePieces}`);
+if (!notes.mobile.animationPolishReady) errors.push('Animation polish director failed to install on mobile tier');
 if (notes.mobile.failures.length) errors.push(`Mobile asset failures: ${notes.mobile.failures.join('; ')}`);
 await mp.screenshot({ path: path.join(out, '06-mobile.png') });
 await mobile.close();

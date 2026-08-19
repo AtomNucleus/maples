@@ -42,7 +42,17 @@ npm run preview
 
 ## Validation
 
-`npm run test:visual` is a Playwright gameplay/showcase gate against the production preview. It verifies that the imported hero, normal enemies, boss, ruin set and nature layer actually attach, then drives the real combat state machine and captures:
+Validation is intentionally run **without GitHub Actions** so development does not depend on paid Actions minutes.
+
+```bash
+npm run build
+npm run test:movement
+npm run test:visual
+```
+
+`npm run test:movement` covers keyboard/touch movement direction, camera-relative movement, imported hero facing, vertical camera-look direction, desktop/mobile HUD layout bounds, and mobile controls.
+
+`npm run test:visual` is the Playwright gameplay/showcase gate against the production preview. It verifies that the imported hero, normal enemies, boss, ruin set and nature layer actually attach, then drives the real combat state machine and captures:
 
 1. title/world composition
 2. first melee impact at the animation-driven hit event
@@ -51,4 +61,10 @@ npm run preview
 5. Thornmaw during the explicit boss-reveal hold
 6. the adaptive mobile layout
 
-The workflow builds first and only performs the anonymous Netlify deployment after the runtime/visual gate passes. `docs/asset-inventory.json` records the vendored GLBs' bounds, node names, skins and animation clip names used for integration.
+For a PR, the same browser suites can be run directly against its Netlify Deploy Preview instead of starting a local server:
+
+```bash
+MAPLES_TEST_BASE_URL=https://deploy-preview-<PR_NUMBER>--maplesttstst.netlify.app npm run test:movement
+```
+
+Keep the normal branch → PR → Netlify Deploy Preview → play-test/approval → merge workflow. `docs/asset-inventory.json` records the vendored GLBs' bounds, node names, skins and animation clip names used for integration.

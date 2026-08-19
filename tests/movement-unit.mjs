@@ -9,6 +9,14 @@ function sampleMove(keys = [], mobileMove = { x: 0, y: 0 }) {
   return input.getMove();
 }
 
+function sampleLook(mouseDX, mouseDY) {
+  const input = Object.create(Input.prototype);
+  input.mouseDX = mouseDX;
+  input.mouseDY = mouseDY;
+  const look = input.consumeLook();
+  return { look, remainingX: input.mouseDX, remainingY: input.mouseDY };
+}
+
 function worldDirection(move, cameraYaw) {
   // Mirrors the shared Game/Character camera basis. The input layer normalizes
   // horizontal controls so physical screen-right remains screen-right.
@@ -51,6 +59,17 @@ for (const yaw of [0, Math.PI / 2, Math.PI, -Math.PI / 2, 0.73]) {
 
 const diagonal = sampleMove(['KeyW', 'KeyD']);
 assert.ok(Math.abs(Math.hypot(diagonal.x, diagonal.y) - 1) < 1e-9, 'diagonal movement must remain normalized');
+
+const lookUp = sampleLook(0, -24);
+assert.equal(lookUp.look.y, 24, 'mouse/touch moving up must produce positive look-up input');
+assert.equal(lookUp.remainingX, 0, 'consumeLook must clear horizontal delta');
+assert.equal(lookUp.remainingY, 0, 'consumeLook must clear vertical delta');
+
+const lookDown = sampleLook(0, 24);
+assert.equal(lookDown.look.y, -24, 'mouse/touch moving down must produce negative look-down input');
+
+const lookRight = sampleLook(18, 0);
+assert.equal(lookRight.look.x, 18, 'horizontal camera look direction must remain unchanged');
 
 const assetVisuals = fs.readFileSync(new URL('../src/game/AssetVisuals.js', import.meta.url), 'utf8');
 assert.match(

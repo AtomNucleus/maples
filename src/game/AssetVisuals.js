@@ -196,7 +196,8 @@ async function attachPlayer(player) {
     configureMeshTree(model);
     configureKnightGear(model);
     normalizeToHeight(model, 1.83);
-    model.rotation.y = Math.PI;
+    // Rowan is authored facing +Z, matching Character.root's forward convention.
+    model.rotation.y = 0;
     player.root.add(model);
     player.assetVisual = model;
     player.assetAnimator = new RigAnimator(model, gltf.animations, PLAYER_CLIPS);

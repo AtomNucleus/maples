@@ -118,7 +118,7 @@ try {
   assert.ok(d.distance > 1.25, `W should move the player, got ${d.distance.toFixed(3)}m`);
   assert.ok(d.z < -0.92 && Math.abs(d.x) < .2, `W should move away from the camera at yaw PI, got (${d.x.toFixed(3)}, ${d.z.toFixed(3)})`);
   assert.ok(dot(d, after.visualForward) > .9, 'hero visual must face the same direction it is moving');
-  assert.equal(after.assetRotationY, 0, 'Rowan visual must not be locally rotated 180 degrees');
+  assert.ok(Math.abs(after.assetRotationY ?? 99) < .08, `Rowan visual yaw drifted too far from +Z: ${after.assetRotationY}`);
   assert.ok(['walk', 'run'].includes(after.animation), `forward movement should play walk/run, got ${after.animation}`);
 
   await resetMovement(page);

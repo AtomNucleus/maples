@@ -1,5 +1,5 @@
 [build]
-  command = "npm run build"
+  command = "node scripts/netlify-validate.mjs"
   publish = "dist"
 
 [[headers]]

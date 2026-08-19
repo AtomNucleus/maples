@@ -31,19 +31,19 @@ const PLAYER_CLIPS = {
 
 const MONSTER_CLIPS = {
   skeleton: {
-    idle: [/Skeleton_Idle$/i], run: [/Skeleton_Running$/i], attack: [/Skeleton_Attack$/i],
+    idle: [/Skeleton_Idle$/i], run: [/Skeleton_Running$/i], windup: [/Skeleton_Attack$/i], attack: [/Skeleton_Attack$/i],
     hit: [/Skeleton_Idle$/i], death: [/Skeleton_Death$/i], spawn: [/Skeleton_Spawn$/i],
   },
   bat: {
-    idle: [/Bat_Flying$/i], run: [/Bat_Flying$/i], attack: [/Bat_Attack2?$/i],
+    idle: [/Bat_Flying$/i], run: [/Bat_Flying$/i], windup: [/Bat_Attack2?$/i], attack: [/Bat_Attack2?$/i],
     hit: [/Bat_Hit$/i], death: [/Bat_Death$/i], spawn: [/Bat_Flying$/i],
   },
   ghost: {
-    idle: ['Flying_Idle'], run: ['Fast_Flying'], attack: ['Punch', 'Headbutt'],
+    idle: ['Flying_Idle'], run: ['Fast_Flying'], windup: ['Punch', 'Headbutt'], attack: ['Punch', 'Headbutt'],
     hit: ['HitReact'], death: ['Death'], spawn: ['Flying_Idle'],
   },
   demon: {
-    idle: ['Idle'], run: ['Run', 'Walk'], attack: ['Punch', 'Weapon'],
+    idle: ['Idle'], run: ['Run', 'Walk'], windup: ['Punch', 'Weapon'], attack: ['Punch', 'Weapon'],
     hit: ['HitReact'], death: ['Death'], spawn: ['Idle'],
   },
 };
@@ -116,18 +116,39 @@ class RigAnimator {
     this.mixer = new THREE.AnimationMixer(model);
     this.action = null;
     this.key = null;
+    this.clip = null;
+    this.clipCache = new Map();
   }
 
-  play(key, { once = false, duration = null, fade = .12 } = {}) {
+  _clipFor(key) {
+    if (!this.clipCache.has(key)) this.clipCache.set(key, findClip(this.clips, this.map[key] || []));
+    return this.clipCache.get(key);
+  }
+
+  play(key, { once = false, duration = null, fade = .12, startFraction = 0 } = {}) {
     if (this.key === key && this.action) return this.action;
-    const clip = findClip(this.clips, this.map[key] || []);
+    const clip = this._clipFor(key);
     if (!clip) return null;
+
     const next = this.mixer.clipAction(clip);
     const previous = this.action;
+    const previousClip = this.clip;
+    const previousKey = this.key;
+    const previousPhase = previous && previousClip?.duration > 0
+      ? (previous.time % previousClip.duration) / previousClip.duration
+      : 0;
+    const phaseSync = !once && ['walk', 'run'].includes(key) && ['walk', 'run'].includes(previousKey);
+
+    if (next === previous && previousKey !== key) next.stop();
     next.enabled = true;
     next.reset();
+    next.stopFading();
     next.setEffectiveWeight(1);
     next.setEffectiveTimeScale(1);
+    next.time = clip.duration * THREE.MathUtils.clamp(startFraction, 0, .92);
+
+    if (phaseSync) next.time = clip.duration * previousPhase;
+
     if (once) {
       next.setLoop(THREE.LoopOnce, 1);
       next.clampWhenFinished = true;
@@ -136,18 +157,30 @@ class RigAnimator {
       next.clampWhenFinished = false;
     }
     if (duration && duration > .02) next.setDuration(duration);
-    next.fadeIn(fade).play();
-    if (previous && previous !== next) previous.fadeOut(fade);
+
+    if (previous && previous !== next) {
+      next.play();
+      next.crossFadeFrom(previous, fade, true);
+    } else {
+      next.play();
+    }
+
     this.action = next;
     this.key = key;
+    this.clip = clip;
     return next;
   }
 
   update(dt, speedScale = 1) {
     if (this.action && !Number.isNaN(speedScale) && this.key && ['run', 'walk'].includes(this.key)) {
-      this.action.setEffectiveTimeScale(THREE.MathUtils.clamp(speedScale, .7, 1.45));
+      this.action.setEffectiveTimeScale(THREE.MathUtils.clamp(speedScale, .68, 1.5));
     }
     this.mixer.update(dt);
+  }
+
+  get normalizedTime() {
+    if (!this.action || !this.clip?.duration) return 0;
+    return (this.action.time % this.clip.duration) / this.clip.duration;
   }
 }
 
@@ -244,26 +277,32 @@ function syncPlayerVisual(player, dt) {
   let key = 'idle';
   let once = false;
   let duration = null;
+  let fade = .15;
+
   if (player.dead || player.state === 'dead') {
-    key = 'death'; once = true; duration = 1.05;
+    key = 'death'; once = true; duration = 1.05; fade = .07;
   } else if (player.state === 'attack') {
-    key = `attack${player.comboIndex}`; once = true; duration = player.stateDuration;
+    key = `attack${player.comboIndex}`; once = true; duration = player.stateDuration; fade = .04;
   } else if (player.state === 'dodge') {
-    key = 'dodge'; once = true; duration = player.stateDuration;
+    key = 'dodge'; once = true; duration = player.stateDuration; fade = .055;
   } else if (player.state === 'cast') {
-    key = 'cast'; once = true; duration = player.stateDuration;
+    key = 'cast'; once = true; duration = player.stateDuration; fade = .07;
   } else if (player.state === 'hurt') {
-    key = 'hurt'; once = true; duration = player.stateDuration;
+    key = 'hurt'; once = true; duration = player.stateDuration; fade = .045;
   } else if (player.speed > .5) {
-    key = player.speed > 3.1 ? 'run' : 'walk';
+    const runThreshold = animator.key === 'run' ? 2.58 : 3.28;
+    key = player.speed > runThreshold ? 'run' : 'walk';
+    fade = animator.key === 'idle' ? .18 : .14;
   }
-  animator.play(key, { once, duration, fade: key.startsWith('attack') ? .055 : .1 });
+
+  animator.play(key, { once, duration, fade });
   animator.update(dt, player.speed / 5.25);
 }
 
 function enemyVisualKey(enemy) {
   if (enemy.dead || enemy.state === 'dead') return 'death';
-  if (enemy.state === 'windup' || enemy.state === 'attack') return 'attack';
+  if (enemy.state === 'windup') return 'windup';
+  if (enemy.state === 'attack') return 'attack';
   if (enemy.state === 'stagger') return 'hit';
   if (enemy.state === 'chase') return 'run';
   if (enemy.state === 'spawn') return 'spawn';
@@ -274,13 +313,32 @@ function syncEnemyVisual(enemy, dt) {
   const animator = enemy.assetAnimator;
   if (!animator) return;
   const key = enemyVisualKey(enemy);
-  const once = ['attack', 'hit', 'death', 'spawn'].includes(key);
+  const once = ['windup', 'attack', 'hit', 'death', 'spawn'].includes(key);
   let duration = null;
-  if (key === 'attack') duration = enemy.state === 'windup' ? enemy.stateDuration + (enemy.isBoss ? .5 : .24) : null;
-  else if (key === 'hit') duration = enemy.stateDuration;
-  else if (key === 'death') duration = enemy.stateDuration;
-  else if (key === 'spawn') duration = enemy.stateDuration;
-  animator.play(key, { once, duration, fade: key === 'attack' ? .06 : .12 });
+  let startFraction = 0;
+  let fade = .11;
+
+  if (key === 'windup') {
+    const anticipationCut = enemy.isBoss ? .3 : .36;
+    duration = enemy.stateDuration / anticipationCut;
+    fade = enemy.isBoss ? .12 : .07;
+  } else if (key === 'attack') {
+    const anticipationCut = enemy.isBoss ? .3 : .36;
+    startFraction = anticipationCut;
+    duration = enemy.stateDuration / (1 - anticipationCut);
+    fade = .025;
+  } else if (key === 'hit') {
+    duration = enemy.stateDuration;
+    fade = .025;
+  } else if (key === 'death') {
+    duration = enemy.stateDuration;
+    fade = .07;
+  } else if (key === 'spawn') {
+    duration = enemy.stateDuration;
+    fade = .08;
+  }
+
+  animator.play(key, { once, duration, fade, startFraction });
   animator.update(dt, enemy.speed / 2.2);
 
   if (enemy.assetKind === 'ghost' || enemy.assetKind === 'bat') {

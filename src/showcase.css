@@ -1,0 +1,76 @@
+/* Showcase presentation layer — isolated from gameplay layout. */
+:root { --showcase-ease: cubic-bezier(.18,.78,.18,1); }
+
+.glass {
+  box-shadow: 0 18px 54px rgba(0,0,0,.28), 0 2px 10px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.055), inset 0 0 42px rgba(92,166,140,.025);
+  transition: transform .45s var(--showcase-ease), border-color .35s ease, box-shadow .45s ease;
+}
+.topbar,.quest,.skills { animation: showcaseHudEnter .8s var(--showcase-ease) both; }
+.quest { animation-delay: .06s; }
+.skills { animation-delay: .12s; }
+.bar i,.quest-progress b,.boss-bar i { transition: transform .28s var(--showcase-ease), width .4s var(--showcase-ease), filter .25s ease; }
+.bar.hp i::after,.bar.mana i::after,.boss-bar i::after {
+  content:''; display:block; height:100%; width:32%; margin-left:auto; background:linear-gradient(90deg,transparent,rgba(255,255,255,.28)); opacity:.55;
+}
+.skill-icon { position:relative; overflow:hidden; transition:transform .24s var(--showcase-ease),filter .24s ease,box-shadow .24s ease; }
+.skill-icon::after {
+  content:''; position:absolute; inset:-60%; background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.22) 49%,transparent 60%);
+  transform:translateX(-55%) rotate(8deg); animation:showcaseSheen 5.2s ease-in-out infinite;
+}
+.skill:nth-child(2) .skill-icon::after { animation-delay:1.25s; }
+.skill:nth-child(3) .skill-icon::after { animation-delay:2.5s; }
+.toast { letter-spacing:.09em; filter:drop-shadow(0 5px 16px rgba(0,0,0,.8)); }
+.toast.showcase-toast-in { animation:showcaseToast .56s var(--showcase-ease) both; }
+.combo.showcase-pop strong { animation:showcaseCombo .3s var(--showcase-ease) both; }
+.damage-number { filter:drop-shadow(0 0 9px rgba(255,188,102,.32)); }
+.damage-number.crit { animation:showcaseCrit .72s var(--showcase-ease) forwards; }
+.boss-ui:not(.hidden) { animation:showcaseBossHud 1.05s var(--showcase-ease) both; }
+.boss-name { letter-spacing:.08em; }
+.boss-bar { position:relative; overflow:visible; }
+.boss-bar::before,.boss-bar::after { content:''; position:absolute; top:50%; width:46px; height:1px; background:linear-gradient(90deg,transparent,rgba(241,160,109,.65)); }
+.boss-bar::before { right:100%; margin-right:8px; }
+.boss-bar::after { left:100%; margin-left:8px; transform:scaleX(-1); }
+
+#showcase-cinematic-bars { position:fixed; inset:0; z-index:40; pointer-events:none; overflow:hidden; }
+#showcase-cinematic-bars i {
+  position:absolute; left:0; width:100%; height:10.5vh; background:linear-gradient(180deg,#020505,rgba(2,5,5,.97));
+  box-shadow:0 0 35px rgba(0,0,0,.72); transition:transform .55s var(--showcase-ease);
+}
+#showcase-cinematic-bars i:first-child { top:0; transform:translateY(-110%); }
+#showcase-cinematic-bars i:last-child { bottom:0; transform:translateY(110%); }
+.boss-cinematic #showcase-cinematic-bars i { transform:translateY(0); }
+
+#showcase-boss-title {
+  position:fixed; z-index:42; left:50%; top:69%; width:min(610px,82vw); transform:translate(-50%,20px) scale(.96);
+  text-align:center; pointer-events:none; opacity:0; filter:blur(4px);
+}
+#showcase-boss-title span { display:block; color:rgba(245,205,151,.72); font:800 9px Inter,sans-serif; letter-spacing:.42em; margin-bottom:4px; }
+#showcase-boss-title strong {
+  display:block; color:#f5e3c4; font:600 clamp(30px,5.2vw,58px) Cinzel,serif; letter-spacing:.16em;
+  text-shadow:0 3px 30px rgba(0,0,0,.92),0 0 28px rgba(223,99,69,.18);
+}
+#showcase-boss-title em { display:block; height:1px; width:0; margin:10px auto 0; background:linear-gradient(90deg,transparent,#e77d5d,#f3ce87,#e77d5d,transparent); }
+.boss-cinematic #showcase-boss-title { animation:showcaseBossTitle 2.65s var(--showcase-ease) both; }
+.boss-cinematic #showcase-boss-title em { animation:showcaseBossLine 1.25s .25s var(--showcase-ease) both; }
+.boss-cinematic .topbar,.boss-cinematic .quest,.boss-cinematic .skills,.boss-cinematic .help,.boss-cinematic .crosshair,.boss-cinematic .combo {
+  opacity:.12; filter:blur(1.5px); transform:translateY(-5px) scale(.985); transition:opacity .35s ease,filter .35s ease,transform .35s ease;
+}
+.boss-cinematic .skills { transform:translateX(-50%) translateY(8px) scale(.985); }
+
+@keyframes showcaseHudEnter { from{opacity:0;transform:translateY(-12px) scale(.975);filter:blur(4px)} to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)} }
+@keyframes showcaseSheen { 0%,62%{transform:translateX(-58%) rotate(8deg);opacity:0} 70%{opacity:.75} 84%,100%{transform:translateX(58%) rotate(8deg);opacity:0} }
+@keyframes showcaseToast { 0%{opacity:0;transform:translate(-50%,10px) scale(.94);filter:blur(5px)} 38%{opacity:1;transform:translate(-50%,-2px) scale(1.025);filter:blur(0)} 100%{opacity:1;transform:translate(-50%,0) scale(1);filter:blur(0)} }
+@keyframes showcaseCombo { 0%{transform:scale(.72) rotate(-4deg);filter:blur(2px)} 58%{transform:scale(1.18) rotate(1deg);filter:blur(0)} 100%{transform:scale(1) rotate(0)} }
+@keyframes showcaseCrit { 0%{transform:translate(-50%,-50%) scale(.55) rotate(-8deg);opacity:0} 16%{transform:translate(-50%,-78%) scale(1.35) rotate(2deg);opacity:1} 55%{transform:translate(-50%,-118%) scale(1.08) rotate(-1deg);opacity:1} 100%{transform:translate(-50%,-165%) scale(.9);opacity:0} }
+@keyframes showcaseBossHud { 0%{opacity:0;transform:translate(-50%,-18px) scaleX(.84);filter:blur(6px)} 55%{opacity:1;filter:blur(0)} 100%{transform:translate(-50%,0) scaleX(1)} }
+@keyframes showcaseBossTitle { 0%,6%{opacity:0;transform:translate(-50%,28px) scale(.92);filter:blur(8px)} 23%{opacity:1;transform:translate(-50%,0) scale(1.02);filter:blur(0)} 72%{opacity:1;transform:translate(-50%,0) scale(1);filter:blur(0)} 100%{opacity:0;transform:translate(-50%,-10px) scale(1.02);filter:blur(3px)} }
+@keyframes showcaseBossLine { 0%{width:0;opacity:0} 35%{opacity:1} 100%{width:min(360px,64vw);opacity:.85} }
+
+@media (max-width:760px),(pointer:coarse) {
+  #showcase-boss-title { top:66%; }
+  #showcase-cinematic-bars i { height:8.5vh; }
+  .boss-cinematic .topbar,.boss-cinematic .quest { opacity:.05; }
+}
+@media (prefers-reduced-motion:reduce) {
+  #showcase-cinematic-bars i,#showcase-boss-title,.glass,.toast,.combo strong { animation-duration:.001ms!important; transition-duration:.001ms!important; }
+}

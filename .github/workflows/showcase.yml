@@ -33,6 +33,8 @@ jobs:
           done
           cat preview.log
           exit 1
+      - name: Validate character movement
+        run: npm run test:movement
       - name: Capture and validate showcase
         run: npm run test:visual
       - name: Anonymous Netlify deploy

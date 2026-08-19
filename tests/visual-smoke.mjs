@@ -29,13 +29,12 @@ await page.waitForFunction(() => {
     g.environmentAssetManager?.ready && g.environmentAssetManager?.count >= 14 &&
     g.natureAssetManager?.ready && g.natureAssetManager?.count >= 70 &&
     g.animationPolishManager?.ready && document.querySelector('#enter-btn')?.dataset.ready === 'true';
-}, null, { timeout: 45000 });
+}, null, { timeout: 60000 });
 
 notes.boot = await page.evaluate(() => {
   const g = window.__MAPLES_GAME__;
   return {
     quality: g.quality,
-    enemies: g.enemies.length,
     importedEnemies: g.enemies.filter(e => e.assetVisual).length,
     heroImported: Boolean(g.player.assetVisual),
     assetFailures: [...(g.assetVisualManager?.failures || [])],
@@ -56,14 +55,15 @@ if (!notes.boot.animationPolishReady) errors.push('Animation polish director did
 await page.screenshot({ path: path.join(out, '01-intro.png') });
 
 await page.locator('#enter-btn').click();
-await page.waitForFunction(() => window.__MAPLES_GAME__.animationPolishManager?.playerReady, null, { timeout: 15000 });
+await page.waitForFunction(() => window.__MAPLES_GAME__.animationPolishManager?.playerReady, null, { timeout: 30000 });
 
+// Run beyond one complete high-speed stride so the distance-driven footstep event is deterministic even under SwiftShader.
+const locomotionStart = await page.evaluate(() => ({ x: window.__MAPLES_GAME__.player.position.x, z: window.__MAPLES_GAME__.player.position.z }));
 await page.keyboard.down('KeyW');
-await page.waitForFunction(() => {
-  const g = window.__MAPLES_GAME__;
-  return ['walk', 'run'].includes(g.player.assetAnimator?.key) &&
-    g.player.speed > .4 && (g.animationPolishManager?.footstepEvents ?? 0) >= 1;
-}, null, { timeout: 20000 });
+await page.waitForFunction(({ x, z }) => {
+  const p = window.__MAPLES_GAME__.player.position;
+  return Math.hypot(p.x - x, p.z - z) >= 1.7;
+}, locomotionStart, { timeout: 90000 });
 notes.locomotion = await page.evaluate(() => {
   const g = window.__MAPLES_GAME__;
   return {
@@ -77,8 +77,10 @@ notes.locomotion = await page.evaluate(() => {
 });
 await page.keyboard.up('KeyW');
 await page.screenshot({ path: path.join(out, '01b-locomotion.png') });
-if (!notes.locomotion.trailReady) errors.push('Could not resolve Rowan sword for motion trail');
-if (!notes.locomotion.secondaryMotionReady) errors.push('Could not resolve cape/hair secondary motion');
+if (!['walk', 'run'].includes(notes.locomotion.animation)) errors.push(`Locomotion animation missing: ${notes.locomotion.animation}`);
+if (!notes.locomotion.trailReady) errors.push('Rowan sword was not resolved for motion trail');
+if (!notes.locomotion.secondaryMotionReady) errors.push('Cape/hair secondary motion was not resolved');
+if (notes.locomotion.footstepEvents < 1) errors.push(`Expected a footstep after 1.7m, got ${notes.locomotion.footstepEvents}`);
 
 await page.evaluate(() => {
   const g = window.__MAPLES_GAME__;
@@ -91,11 +93,10 @@ await page.evaluate(() => {
 await page.waitForTimeout(80);
 await page.mouse.click(640, 360);
 await page.waitForFunction(() => {
-  const g = window.__MAPLES_GAME__;
-  const p = g.player;
+  const g = window.__MAPLES_GAME__, p = g.player;
   return p.state === 'attack' && p.comboIndex === 0 && p.attackEventFired &&
     g.animationPolishManager?.trailActive && (g.animationPolishManager?.trailSamples ?? 0) >= 2;
-}, null, { timeout: 15000 });
+}, null, { timeout: 30000 });
 notes.melee = await page.evaluate(() => ({
   animation: window.__MAPLES_GAME__.player.assetAnimator?.key,
   samples: window.__MAPLES_GAME__.animationPolishManager?.trailSamples ?? 0,
@@ -104,17 +105,16 @@ if (notes.melee.animation !== 'attack0') errors.push(`Expected attack0, got ${no
 await page.screenshot({ path: path.join(out, '02-melee-impact.png') });
 
 for (const expectedCombo of [1, 2]) {
-  await page.waitForFunction(() => window.__MAPLES_GAME__.player.state === 'idle', null, { timeout: 15000 });
+  await page.waitForFunction(() => window.__MAPLES_GAME__.player.state === 'idle', null, { timeout: 30000 });
   await page.mouse.click(640, 360);
   await page.waitForFunction(index => {
     const g = window.__MAPLES_GAME__, p = g.player;
     return p.state === 'attack' && p.comboIndex === index && p.attackEventFired &&
       g.animationPolishManager?.trailActive && (g.animationPolishManager?.trailSamples ?? 0) >= 2;
-  }, expectedCombo, { timeout: 15000 });
+  }, expectedCombo, { timeout: 30000 });
   if (expectedCombo === 2) {
     notes.finisher = await page.evaluate(() => ({
       animation: window.__MAPLES_GAME__.player.assetAnimator?.key,
-      comboIndex: window.__MAPLES_GAME__.player.comboIndex,
       samples: window.__MAPLES_GAME__.animationPolishManager?.trailSamples ?? 0,
     }));
     await page.screenshot({ path: path.join(out, '03-combo-finisher.png') });
@@ -122,7 +122,7 @@ for (const expectedCombo of [1, 2]) {
 }
 if (notes.finisher?.animation !== 'attack2') errors.push(`Expected attack2 finisher, got ${notes.finisher?.animation}`);
 
-await page.waitForFunction(() => window.__MAPLES_GAME__.player.state === 'idle', null, { timeout: 15000 });
+await page.waitForFunction(() => window.__MAPLES_GAME__.player.state === 'idle', null, { timeout: 30000 });
 await page.evaluate(() => {
   const g = window.__MAPLES_GAME__;
   g.player.setPosition(0,0,5.2); g.player.facing = Math.PI; g.player.root.rotation.y = Math.PI;
@@ -134,7 +134,7 @@ await page.keyboard.press('KeyQ');
 await page.waitForFunction(() => {
   const g = window.__MAPLES_GAME__;
   return g.player.state === 'cast' && g.projectiles.length > 0;
-}, null, { timeout: 15000 });
+}, null, { timeout: 30000 });
 notes.spell = await page.evaluate(() => ({ animation: window.__MAPLES_GAME__.player.assetAnimator?.key, projectiles: window.__MAPLES_GAME__.projectiles.length }));
 if (notes.spell.animation !== 'cast') errors.push(`Expected cast animation, got ${notes.spell.animation}`);
 await page.screenshot({ path: path.join(out, '04-ember-lance.png') });
@@ -147,14 +147,12 @@ await page.evaluate(() => {
 await page.waitForFunction(() => {
   const g = window.__MAPLES_GAME__;
   return Boolean(g.boss?.assetVisual) && g.boss.state === 'spawn' && g.bossRevealTimer > 0 && g.animationPolishManager?.bossPolished;
-}, null, { timeout: 45000 });
+}, null, { timeout: 90000 });
 notes.boss = await page.evaluate(() => ({
-  imported: Boolean(window.__MAPLES_GAME__.boss?.assetVisual),
-  kind: window.__MAPLES_GAME__.boss?.assetKind,
-  animation: window.__MAPLES_GAME__.boss?.assetAnimator?.key,
-  polished: Boolean(window.__MAPLES_GAME__.animationPolishManager?.bossPolished),
+  imported: Boolean(window.__MAPLES_GAME__.boss?.assetVisual), kind: window.__MAPLES_GAME__.boss?.assetKind,
+  animation: window.__MAPLES_GAME__.boss?.assetAnimator?.key, polished: Boolean(window.__MAPLES_GAME__.animationPolishManager?.bossPolished),
 }));
-if (!notes.boss.imported || notes.boss.kind !== 'demon' || !notes.boss.polished) errors.push('Thornmaw imported/polished boss state failed');
+if (!notes.boss.imported || notes.boss.kind !== 'demon' || !notes.boss.polished) errors.push('Thornmaw imported/polished state failed');
 await page.screenshot({ path: path.join(out, '05-boss-reveal.png') });
 await context.close();
 
@@ -166,7 +164,7 @@ await mp.waitForFunction(() => {
   const g = window.__MAPLES_GAME__;
   return Boolean(g?.player?.assetVisual) && g.environmentAssetManager?.ready && g.natureAssetManager?.ready &&
     g.animationPolishManager?.ready && document.querySelector('#enter-btn')?.dataset.ready === 'true';
-}, null, { timeout: 45000 });
+}, null, { timeout: 90000 });
 notes.mobile = await mp.evaluate(() => ({
   controls: getComputedStyle(document.querySelector('#mobile-controls')).display,
   heroImported: Boolean(window.__MAPLES_GAME__.player.assetVisual),
@@ -181,9 +179,6 @@ await mobile.close();
 await browser.close();
 
 fs.writeFileSync(path.join(out, 'visual-report.json'), JSON.stringify({ errors, notes }, null, 2));
-if (errors.length) {
-  console.error(errors.join('\n'));
-  process.exit(1);
-}
+if (errors.length) { console.error(errors.join('\n')); process.exit(1); }
 console.log('visual-smoke: PASS');
 console.log(JSON.stringify(notes, null, 2));

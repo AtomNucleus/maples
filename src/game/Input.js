@@ -97,11 +97,13 @@ export class Input {
 
   getMove() {
     let x = 0, y = 0;
-    if (this.keys.has('KeyA')) x -= 1;
-    if (this.keys.has('KeyD')) x += 1;
+    // Game/Character use a legacy camera basis whose horizontal axis is sign-inverted.
+    // Normalize every control source here so physical/screen right always means move right.
+    if (this.keys.has('KeyA')) x += 1;
+    if (this.keys.has('KeyD')) x -= 1;
     if (this.keys.has('KeyW')) y += 1;
     if (this.keys.has('KeyS')) y -= 1;
-    x += this.mobileMove.x;
+    x -= this.mobileMove.x;
     y += this.mobileMove.y;
     const l = Math.hypot(x, y);
     if (l > 1) { x /= l; y /= l; }

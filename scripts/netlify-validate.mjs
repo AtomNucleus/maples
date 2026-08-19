@@ -33,8 +33,8 @@ const preview = spawn(
 
 try {
   await ready();
-  await run('npm', ['run', 'test:movement']);
-  console.log('MOVEMENT CAMERA HUD SUITE PASS');
+  await run('npm', ['run', 'test:visual']);
+  console.log('VISUAL SUITE PASS');
 } finally {
   try { process.kill(-preview.pid, 'SIGTERM'); }
   catch { preview.kill('SIGTERM'); }

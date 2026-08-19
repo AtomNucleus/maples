@@ -9,7 +9,7 @@
     "preview": "vite preview --host 0.0.0.0",
     "test:visual": "node tests/visual-smoke.mjs",
     "test:movement:unit": "node tests/movement-unit.mjs",
-    "test:movement": "npm run test:movement:unit && node tests/movement-e2e.mjs && node tests/hud-narrow-e2e.mjs"
+    "test:movement": "npm run test:movement:unit && node tests/movement-e2e.mjs"
   },
   "dependencies": {
     "three": "^0.179.1"

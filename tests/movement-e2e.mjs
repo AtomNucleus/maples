@@ -199,6 +199,23 @@ try {
   d = displacement(before, after); report.mobile.forward = { before, after, displacement: d };
   assert.ok(d.z < -.88 && Math.abs(d.x) < .35, `joystick-up should move camera-forward, got ${JSON.stringify(d)}`);
   assert.ok(dot(d, after.visualForward) > .9, 'hero visual must face joystick-forward movement');
+
+  await mp.setViewportSize({ width: 320, height: 568 });
+  await mp.waitForTimeout(120);
+  report.mobile.narrowUi = await mp.evaluate(() => {
+    const rect = selector => {
+      const el = document.querySelector(selector);
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return { x: r.x, width: r.width, right: r.right };
+    };
+    return { topbar: rect('.topbar'), quest: rect('.quest'), viewport: innerWidth };
+  });
+  assert.ok(boxHealth(report.mobile.narrowUi.topbar) && boxHealth(report.mobile.narrowUi.quest), '320px top HUD panels must remain measurable');
+  assert.ok(report.mobile.narrowUi.topbar.x >= 0, '320px character HUD must stay inside the left viewport edge');
+  assert.ok(report.mobile.narrowUi.quest.right <= report.mobile.narrowUi.viewport, '320px quest HUD must stay inside the right viewport edge');
+  assert.ok(report.mobile.narrowUi.topbar.right + 6 <= report.mobile.narrowUi.quest.x,
+    `320px HUD panels must keep at least a 6px gap; got ${JSON.stringify(report.mobile.narrowUi)}`);
   await mobile.close();
 
   fs.writeFileSync(path.join(out, 'movement-report.json'), JSON.stringify(report, null, 2));

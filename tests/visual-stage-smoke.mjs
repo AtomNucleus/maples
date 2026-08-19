@@ -64,8 +64,51 @@ try {
   assert.ok(locomotion.secondaryMotionReady, 'secondary motion not ready');
   assert.ok(locomotion.footstepEvents >= 1, `footsteps ${locomotion.footstepEvents}`);
 
+  await page.evaluate(() => {
+    const g = window.__MAPLES_GAME__;
+    g.cameraYaw = Math.PI;
+    g.player.setPosition(0, 0, 5.2); g.player.velocity.set(0,0,0);
+    g.player.state = 'idle'; g.player.stateTime = 0; g.player.comboDeadline = 0;
+    const e = g.enemies.find(x => !x.dead && !x.isBoss && x.assetVisual);
+    e.position.set(0, 0, 3.45); e.state = 'idle'; e.stateTime = 0; e.velocity.set(0,0,0);
+  });
+  await page.waitForTimeout(80);
+  await page.mouse.click(640, 360);
+  await page.waitForFunction(() => {
+    const g = window.__MAPLES_GAME__, p = g.player;
+    return p.state === 'attack' && p.comboIndex === 0 && p.attackEventFired &&
+      g.animationPolishManager?.trailActive && (g.animationPolishManager?.trailSamples ?? 0) >= 2;
+  }, null, { timeout: 30000 });
+  assert.equal(await page.evaluate(() => window.__MAPLES_GAME__.player.assetAnimator?.key), 'attack0');
+
+  for (const expectedCombo of [1, 2]) {
+    await page.waitForFunction(() => window.__MAPLES_GAME__.player.state === 'idle', null, { timeout: 30000 });
+    await page.mouse.click(640, 360);
+    await page.waitForFunction(index => {
+      const g = window.__MAPLES_GAME__, p = g.player;
+      return p.state === 'attack' && p.comboIndex === index && p.attackEventFired &&
+        g.animationPolishManager?.trailActive && (g.animationPolishManager?.trailSamples ?? 0) >= 2;
+    }, expectedCombo, { timeout: 30000 });
+  }
+  assert.equal(await page.evaluate(() => window.__MAPLES_GAME__.player.assetAnimator?.key), 'attack2');
+
+  await page.waitForFunction(() => window.__MAPLES_GAME__.player.state === 'idle', null, { timeout: 30000 });
+  await page.evaluate(() => {
+    const g = window.__MAPLES_GAME__;
+    g.player.setPosition(0,0,5.2); g.player.facing = Math.PI; g.player.root.rotation.y = Math.PI;
+    g.player.mana = g.player.maxMana; g.spellCooldown = 0;
+    const target = g.enemies.find(x => !x.dead && !x.isBoss && x.assetVisual);
+    if (target) { target.position.set(0,0,-2.3); target.state='idle'; target.stateTime=0; target.velocity.set(0,0,0); }
+  });
+  await page.keyboard.press('KeyQ');
+  await page.waitForFunction(() => {
+    const g = window.__MAPLES_GAME__;
+    return g.player.state === 'cast' && g.projectiles.length > 0;
+  }, null, { timeout: 30000 });
+  assert.equal(await page.evaluate(() => window.__MAPLES_GAME__.player.assetAnimator?.key), 'cast');
+
   await context.close();
-  console.log('VISUAL STAGE BOOT LOCOMOTION PASS');
+  console.log('VISUAL STAGE BOOT LOCOMOTION COMBAT SPELL PASS');
 } finally {
   await browser.close();
 }

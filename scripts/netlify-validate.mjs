@@ -1,15 +1,34 @@
-import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { chromium } from 'playwright';
-const baseUrl='http://127.0.0.1:4173';
-const env={...process.env,MAPLES_TEST_BASE_URL:baseUrl};
-function run(c,a){return new Promise((res,rej)=>{const p=spawn(c,a,{stdio:'inherit',env,shell:false});p.on('error',rej);p.on('exit',code=>code===0?res():rej(new Error(`${c} ${a.join(' ')} failed ${code}`)));});}
-async function waitServer(){for(let i=0;i<100;i++){try{const r=await fetch(baseUrl,{signal:AbortSignal.timeout(900)});if(r.ok)return;}catch{}await new Promise(r=>setTimeout(r,250));}throw new Error('preview unavailable');}
-await run('npm',['run','build']);await run('npx',['playwright-core','install','chromium']);
-const preview=spawn('npm',['run','preview','--','--host','127.0.0.1','--port','4173'],{stdio:'inherit',env,shell:false,detached:true});let browser;
-try{await waitServer();browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-setuid-sandbox','--use-gl=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:1});const page=await context.newPage();await page.goto(baseUrl,{waitUntil:'networkidle'});await page.waitForFunction(()=>document.querySelector('#enter-btn')?.dataset.ready==='true',null,{timeout:30000});await page.locator('#enter-btn').click();await page.waitForTimeout(150);await page.evaluate(()=>{const g=window.__MAPLES_GAME__;g._updateEnemies=()=>{};g._updateEncounter=()=>{};for(const e of g.enemies)e.root.visible=false;});const joystick=page.locator('#joystick');const box=await joystick.boundingBox();assert.ok(box,'joystick visible');const cx=box.x+box.width/2,cy=box.y+box.height/2;
-async function reset(){await page.evaluate(()=>{const g=window.__MAPLES_GAME__;g.cameraYaw=Math.PI;g.player.setPosition(0,0,0);g.player.velocity.set(0,0,0);g.player.state='idle';g.player.stateTime=0;g.player.facing=Math.PI;g.player.root.rotation.y=Math.PI;});await page.waitForTimeout(80);}
-async function sample(){return page.evaluate(()=>{const p=window.__MAPLES_GAME__.player;const yaw=p.facing+(p.assetVisual?.rotation.y||0);return{x:p.position.x,z:p.position.z,visualForward:{x:Math.sin(yaw),z:Math.cos(yaw)},move:{...window.__MAPLES_GAME__.input.mobileMove}};});}
-await reset();await page.mouse.move(cx,cy);await page.mouse.down();await page.mouse.move(cx+box.width*.28,cy,{steps:3});await page.waitForFunction(()=>window.__MAPLES_GAME__.player.position.x>.45,null,{timeout:10000});let s=await sample();await page.mouse.up();console.log('joystick-right',JSON.stringify(s));assert.ok(Math.abs(s.z)<.4,`right z drift ${s.z}`);assert.ok(s.move.x>0 || Math.abs(s.move.x)<.01,'raw joystick should report right before release');
-await reset();await page.mouse.move(cx,cy);await page.mouse.down();await page.mouse.move(cx,cy-box.height*.28,{steps:3});await page.waitForFunction(()=>window.__MAPLES_GAME__.player.position.z<-.5,null,{timeout:10000});s=await sample();await page.mouse.up();console.log('joystick-forward',JSON.stringify(s));assert.ok(Math.abs(s.x)<.4,`forward x drift ${s.x}`);assert.ok(s.visualForward.z<-.85,`visual forward ${JSON.stringify(s.visualForward)}`);console.log('netlify-stage: mobile-joystick PASS');await context.close();}
-finally{await browser?.close();try{process.kill(-preview.pid,'SIGTERM');}catch{preview.kill('SIGTERM');}}
+
+const baseUrl = 'http://127.0.0.1:4173';
+const env = { ...process.env, MAPLES_TEST_BASE_URL: baseUrl };
+function run(command, args) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { stdio: 'inherit', env, shell: false });
+    child.on('error', reject);
+    child.on('exit', code => code === 0 ? resolve() : reject(new Error(`${command} ${args.join(' ')} exited with code ${code}`)));
+  });
+}
+async function waitForPreview() {
+  for (let i = 0; i < 100; i++) {
+    try { if ((await fetch(baseUrl, { signal: AbortSignal.timeout(900) })).ok) return; } catch {}
+    await new Promise(resolve => setTimeout(resolve, 250));
+  }
+  throw new Error('Vite preview did not become ready');
+}
+
+await run('npm', ['run', 'build']);
+await run('npx', ['playwright-core', 'install', 'chromium']);
+const preview = spawn('npm', ['run', 'preview', '--', '--host', '127.0.0.1', '--port', '4173'], {
+  stdio: 'inherit', env, shell: false, detached: true,
+});
+try {
+  await waitForPreview();
+  console.log('Netlify validation: movement suite');
+  await run('npm', ['run', 'test:movement']);
+  console.log('Netlify validation: visual/gameplay suite');
+  await run('node', ['scripts/visual-netlify.mjs']);
+  console.log('Netlify validation: ALL PASS');
+} finally {
+  try { process.kill(-preview.pid, 'SIGTERM'); } catch { preview.kill('SIGTERM'); }
+}

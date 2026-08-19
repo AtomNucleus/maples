@@ -15,34 +15,55 @@ function generatedText(result) {
   return typeof value === 'string' ? value : '';
 }
 
+function progress(info) {
+  if (!info) return;
+  post('progress', {
+    status: info.status ?? 'loading',
+    file: info.file ?? '',
+    loaded: Number(info.loaded || 0),
+    total: Number(info.total || 0),
+    progress: Number.isFinite(info.progress) ? info.progress : null
+  });
+}
+
+async function loadPipeline(device, modelDtype) {
+  return pipeline('text-generation', MODEL_ID, {
+    device,
+    dtype: modelDtype,
+    progress_callback: progress
+  });
+}
+
 async function initialize(preferWebGPU = true) {
   if (generator) return { backend, dtype };
 
-  const canWebGPU = Boolean(preferWebGPU && self.navigator?.gpu);
-  backend = canWebGPU ? 'webgpu' : 'wasm';
-  dtype = canWebGPU ? 'q4f16' : 'q4';
-
   env.allowLocalModels = false;
   env.useBrowserCache = true;
+  env.useWasmCache = true;
   if (env.backends?.onnx?.wasm) {
     env.backends.onnx.wasm.numThreads = Math.max(1, Math.min(2, self.navigator?.hardwareConcurrency || 2));
   }
 
-  generator = await pipeline('text-generation', MODEL_ID, {
-    device: backend,
-    dtype,
-    progress_callback: info => {
-      if (!info) return;
-      post('progress', {
-        status: info.status ?? 'loading',
-        file: info.file ?? '',
-        loaded: Number(info.loaded || 0),
-        total: Number(info.total || 0),
-        progress: Number.isFinite(info.progress) ? info.progress : null
+  const canWebGPU = Boolean(preferWebGPU && self.navigator?.gpu);
+  if (canWebGPU) {
+    try {
+      backend = 'webgpu';
+      dtype = 'q4f16';
+      generator = await loadPipeline(backend, dtype);
+      return { backend, dtype };
+    } catch (error) {
+      generator = null;
+      post('backend-fallback', {
+        from: 'webgpu',
+        to: 'wasm',
+        message: error?.message || String(error)
       });
     }
-  });
+  }
 
+  backend = 'wasm';
+  dtype = 'q4';
+  generator = await loadPipeline(backend, dtype);
   return { backend, dtype };
 }
 

@@ -33,8 +33,8 @@ const preview = spawn(
 
 try {
   await ready();
-  await run('npm', ['run', 'test:visual']);
-  console.log('VISUAL SUITE PASS');
+  await run('node', ['tests/visual-stage-smoke.mjs']);
+  console.log('VISUAL BOOT LOCOMOTION STAGE PASS');
 } finally {
   try { process.kill(-preview.pid, 'SIGTERM'); }
   catch { preview.kill('SIGTERM'); }

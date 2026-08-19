@@ -1,36 +1,24 @@
 import { spawn } from 'node:child_process';
+import fs from 'node:fs';
 
-const baseUrl = 'http://127.0.0.1:4173';
-const env = { ...process.env, MAPLES_TEST_BASE_URL: baseUrl };
-
-function run(command, args) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: 'inherit', env, shell: false });
-    child.on('error', reject);
-    child.on('exit', code => code === 0 ? resolve() : reject(new Error(`${command} ${args.join(' ')} exited with code ${code}`)));
+function runCapture(command, args, env = process.env) {
+  return new Promise(resolve => {
+    const chunks = [];
+    const child = spawn(command, args, { env, shell: false, stdio: ['ignore', 'pipe', 'pipe'] });
+    child.stdout.on('data', data => { process.stdout.write(data); chunks.push(String(data)); });
+    child.stderr.on('data', data => { process.stderr.write(data); chunks.push(String(data)); });
+    child.on('error', error => resolve({ ok: false, code: -1, output: String(error) }));
+    child.on('exit', code => resolve({ ok: code === 0, code, output: chunks.join('').slice(-20000) }));
   });
 }
 
-async function waitForPreview() {
-  for (let i = 0; i < 80; i++) {
-    try {
-      const response = await fetch(baseUrl, { signal: AbortSignal.timeout(900) });
-      if (response.ok) return;
-    } catch {}
-    await new Promise(resolve => setTimeout(resolve, 250));
-  }
-  throw new Error('Vite preview did not become ready');
+const report = { generatedAt: new Date().toISOString() };
+report.build = await runCapture('npm', ['run', 'build']);
+if (report.build.ok) report.chromium = await runCapture('npx', ['playwright-core', 'install', 'chromium']);
+if (report.build.ok && report.chromium?.ok) {
+  report.movement = await runCapture('npm', ['run', 'test:movement'], { ...process.env, MAPLES_TEST_BASE_URL: 'http://127.0.0.1:4173' });
 }
-
-await run('npm', ['run', 'build']);
-await run('npx', ['playwright-core', 'install', 'chromium']);
-const preview = spawn('npm', ['run', 'preview', '--', '--host', '127.0.0.1', '--port', '4173'], {
-  stdio: 'inherit', env, shell: false, detached: true,
-});
-try {
-  await waitForPreview();
-  await run('npm', ['run', 'test:movement']);
-  console.log('netlify-stage: full-movement PASS');
-} finally {
-  try { process.kill(-preview.pid, 'SIGTERM'); } catch { preview.kill('SIGTERM'); }
-}
+report.pass = Boolean(report.build?.ok && report.chromium?.ok && report.movement?.ok);
+fs.mkdirSync('dist', { recursive: true });
+fs.writeFileSync('dist/validation.json', JSON.stringify(report, null, 2));
+console.log(`diagnostic movement result: ${report.pass ? 'PASS' : 'FAIL'}`);

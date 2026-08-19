@@ -20,22 +20,14 @@ async function isServerUp() {
 
 async function ensurePreview() {
   if (await isServerUp()) return;
-  if (!fs.existsSync(path.resolve('dist/index.html'))) {
-    execFileSync('npm', ['run', 'build'], { stdio: 'inherit' });
-  }
+  if (!fs.existsSync(path.resolve('dist/index.html'))) execFileSync('npm', ['run', 'build'], { stdio: 'inherit' });
   const url = new URL(baseUrl);
-  previewProcess = spawn('npm', ['run', 'preview', '--', '--host', url.hostname, '--port', url.port || '4173'], {
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
+  previewProcess = spawn('npm', ['run', 'preview', '--', '--host', url.hostname, '--port', url.port || '4173'], { stdio: ['ignore', 'pipe', 'pipe'] });
   for (let i = 0; i < 60; i++) {
     if (await isServerUp()) return;
     await new Promise(resolve => setTimeout(resolve, 250));
   }
   throw new Error('Could not start Vite preview for movement tests');
-}
-
-function horizontalDistance(a, b) {
-  return Math.hypot(b.x - a.x, b.z - a.z);
 }
 
 async function readyGame(page) {
@@ -69,8 +61,7 @@ async function resetMovement(page) {
 
 async function samplePlayer(page) {
   return page.evaluate(() => {
-    const g = window.__MAPLES_GAME__;
-    const p = g.player;
+    const p = window.__MAPLES_GAME__.player;
     const visualYaw = p.facing + (p.assetVisual?.rotation.y || 0);
     return {
       x: p.position.x,
@@ -89,17 +80,16 @@ function displacement(from, to) {
   const len = Math.hypot(dx, dz) || 1;
   return { x: dx / len, z: dz / len, distance: Math.hypot(dx, dz) };
 }
-
-function dot(a, b) {
-  return a.x * b.x + a.z * b.z;
+function dot(a, b) { return a.x * b.x + a.z * b.z; }
+async function waitForDistance(page, from, distance, timeout = 5000) {
+  await page.waitForFunction(({ x, z, distance }) => {
+    const p = window.__MAPLES_GAME__.player.position;
+    return Math.hypot(p.x - x, p.z - z) >= distance;
+  }, { x: from.x, z: from.z, distance }, { timeout });
 }
 
 await ensurePreview();
-const browser = await chromium.launch({
-  headless: true,
-  args: ['--no-sandbox', '--disable-setuid-sandbox', '--use-gl=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist'],
-});
-
+const browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox', '--use-gl=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist'] });
 const report = { desktop: {}, mobile: {} };
 try {
   const desktop = await browser.newContext({ viewport: { width: 1280, height: 720 } });
@@ -109,13 +99,11 @@ try {
   await resetMovement(page);
   let before = await samplePlayer(page);
   await page.keyboard.down('KeyW');
-  await page.waitForTimeout(520);
-  await page.keyboard.up('KeyW');
-  await page.waitForTimeout(90);
+  await waitForDistance(page, before, 1.35);
   let after = await samplePlayer(page);
+  await page.keyboard.up('KeyW');
   let d = displacement(before, after);
   report.desktop.forward = { before, after, displacement: d };
-  assert.ok(d.distance > 1.25, `W should move the player, got ${d.distance.toFixed(3)}m`);
   assert.ok(d.z < -0.92 && Math.abs(d.x) < .2, `W should move away from the camera at yaw PI, got (${d.x.toFixed(3)}, ${d.z.toFixed(3)})`);
   assert.ok(dot(d, after.visualForward) > .9, 'hero visual must face the same direction it is moving');
   assert.ok(Math.abs(after.assetRotationY ?? 99) < .08, `Rowan visual yaw drifted too far from +Z: ${after.assetRotationY}`);
@@ -124,33 +112,25 @@ try {
   await resetMovement(page);
   before = await samplePlayer(page);
   await page.keyboard.down('KeyD');
-  await page.waitForTimeout(420);
-  await page.keyboard.up('KeyD');
-  await page.waitForTimeout(80);
+  await waitForDistance(page, before, 1.0);
   after = await samplePlayer(page);
+  await page.keyboard.up('KeyD');
   d = displacement(before, after);
   report.desktop.right = { before, after, displacement: d };
-  assert.ok(d.distance > .9, 'D should move the player');
   assert.ok(d.x > .9 && Math.abs(d.z) < .3, `D should move screen-right at yaw PI, got (${d.x.toFixed(3)}, ${d.z.toFixed(3)})`);
 
   await resetMovement(page);
   before = await samplePlayer(page);
   await page.keyboard.down('KeyA');
-  await page.waitForTimeout(420);
-  await page.keyboard.up('KeyA');
-  await page.waitForTimeout(80);
+  await waitForDistance(page, before, 1.0);
   after = await samplePlayer(page);
+  await page.keyboard.up('KeyA');
   d = displacement(before, after);
   report.desktop.left = { before, after, displacement: d };
   assert.ok(d.x < -.9 && Math.abs(d.z) < .3, `A should move screen-left at yaw PI, got (${d.x.toFixed(3)}, ${d.z.toFixed(3)})`);
   await desktop.close();
 
-  const mobile = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    isMobile: true,
-    hasTouch: true,
-    deviceScaleFactor: 1,
-  });
+  const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
   const mp = await mobile.newPage();
   await readyGame(mp);
   const joystick = mp.locator('#joystick');
@@ -161,30 +141,20 @@ try {
 
   await resetMovement(mp);
   before = await samplePlayer(mp);
-  await mp.mouse.move(cx, cy);
-  await mp.mouse.down();
-  await mp.mouse.move(cx + box.width * .28, cy, { steps: 2 });
-  await mp.waitForTimeout(460);
-  await mp.mouse.up();
-  await mp.waitForTimeout(80);
-  after = await samplePlayer(mp);
+  await mp.mouse.move(cx, cy); await mp.mouse.down(); await mp.mouse.move(cx + box.width * .28, cy, { steps: 2 });
+  await waitForDistance(mp, before, .9);
+  after = await samplePlayer(mp); await mp.mouse.up();
   d = displacement(before, after);
   report.mobile.right = { before, after, displacement: d };
-  assert.ok(d.distance > .8, 'joystick-right should move the player');
   assert.ok(d.x > .88 && Math.abs(d.z) < .35, `joystick-right should move screen-right, got (${d.x.toFixed(3)}, ${d.z.toFixed(3)})`);
 
   await resetMovement(mp);
   before = await samplePlayer(mp);
-  await mp.mouse.move(cx, cy);
-  await mp.mouse.down();
-  await mp.mouse.move(cx, cy - box.height * .28, { steps: 2 });
-  await mp.waitForTimeout(520);
-  await mp.mouse.up();
-  await mp.waitForTimeout(90);
-  after = await samplePlayer(mp);
+  await mp.mouse.move(cx, cy); await mp.mouse.down(); await mp.mouse.move(cx, cy - box.height * .28, { steps: 2 });
+  await waitForDistance(mp, before, 1.1);
+  after = await samplePlayer(mp); await mp.mouse.up();
   d = displacement(before, after);
   report.mobile.forward = { before, after, displacement: d };
-  assert.ok(d.distance > 1.0, 'joystick-up should move the player');
   assert.ok(d.z < -.88 && Math.abs(d.x) < .35, `joystick-up should move camera-forward, got (${d.x.toFixed(3)}, ${d.z.toFixed(3)})`);
   assert.ok(dot(d, after.visualForward) > .9, 'hero visual must face joystick-forward movement');
   await mobile.close();

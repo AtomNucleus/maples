@@ -1,6 +1,7 @@
 import './style.css';
 import './asset-polish.css';
 import './showcase.css';
+import './ai-dm.css';
 import { Game } from './game/Game.js';
 import { enhanceInstance } from './game/Enhancements.js';
 import { installAssetVisuals } from './game/AssetVisuals.js';
@@ -10,10 +11,12 @@ import { installCinematicPolish } from './game/CinematicPolish.js';
 import { installRowanStyle } from './game/RowanStyle.js';
 import { installShowcasePass } from './game/ShowcasePass.js';
 import { installShowcaseQualityGate } from './game/ShowcaseQualityGate.js';
+import { installDungeonMaster } from './game/DungeonMaster.js';
 
 const canvas = document.querySelector('#game');
 const game = new Game(canvas);
 enhanceInstance(game);
+installDungeonMaster(game);
 
 const enterButton = document.querySelector('#enter-btn');
 enterButton.disabled = true;

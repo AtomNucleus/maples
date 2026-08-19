@@ -9,6 +9,7 @@ import { installNatureAssets } from './game/NatureAssets.js';
 import { installCinematicPolish } from './game/CinematicPolish.js';
 import { installRowanStyle } from './game/RowanStyle.js';
 import { installShowcasePass } from './game/ShowcasePass.js';
+import { installShowcaseQualityGate } from './game/ShowcaseQualityGate.js';
 
 const canvas = document.querySelector('#game');
 const game = new Game(canvas);
@@ -22,6 +23,7 @@ const visualManager = installAssetVisuals(game);
 installRowanStyle(game);
 installCinematicPolish(game);
 installShowcasePass(game);
+installShowcaseQualityGate(game);
 const environmentPromise = installEnvironmentAssets(game);
 const naturePromise = installNatureAssets(game);
 

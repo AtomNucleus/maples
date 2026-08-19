@@ -131,7 +131,9 @@ export class Input {
   }
 
   consumeLook() {
-    const v = { x: this.mouseDX, y: this.mouseDY };
+    // DOM mouse/touch Y grows downward; expose camera look Y with the opposite sign
+    // so dragging/moving up looks up and dragging/moving down looks down.
+    const v = { x: this.mouseDX, y: -this.mouseDY };
     this.mouseDX = this.mouseDY = 0;
     return v;
   }

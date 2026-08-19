@@ -35,7 +35,7 @@ try {
   await ready();
   await run('npm', ['run', 'test:movement']);
   console.log('MOVEMENT SUITE PASS');
-  await run('npm', ['run', 'test:visual']);
+  await run('node', ['scripts/visual-netlify.mjs']);
   console.log('VISUAL SUITE PASS');
   console.log('NETLIFY SHOWCASE VALIDATION PASS');
 } finally {

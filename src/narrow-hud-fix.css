@@ -1,0 +1,21 @@
+/* Keep the compact HUD readable on very narrow phones without panel overlap. */
+@media (max-width: 360px) {
+  .topbar {
+    width: min(176px, calc(57vw - 16px));
+    min-width: 0;
+  }
+
+  .quest {
+    width: min(132px, calc(43vw - 12px));
+    min-width: 0;
+  }
+
+  .name-row { gap: 4px; }
+  .name-row strong,
+  .quest-progress span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

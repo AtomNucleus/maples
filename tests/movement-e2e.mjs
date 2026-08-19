@@ -74,6 +74,7 @@ function displacement(from, to) {
   return { x: dx / len, z: dz / len, distance: Math.hypot(dx, dz) };
 }
 function dot(a, b) { return a.x * b.x + a.z * b.z; }
+function boxHealth(box) { return box && box.width > 0 && box.height > 0; }
 async function waitForDistance(page, from, distance = .45) {
   await page.waitForFunction(({ x, z, distance }) => {
     const p = window.__MAPLES_GAME__.player.position;
@@ -93,12 +94,34 @@ try {
   const page = await desktop.newPage();
   await readyGame(page);
 
+  report.desktop.ui = await page.evaluate(() => {
+    const rect = selector => {
+      const el = document.querySelector(selector);
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return { x: r.x, y: r.y, width: r.width, height: r.height, right: r.right, bottom: r.bottom };
+    };
+    return {
+      topbar: rect('.topbar'),
+      quest: rect('.quest'),
+      skills: rect('.skills'),
+      questCopyDisplay: getComputedStyle(document.querySelector('.quest-copy')).display,
+      persistentHelpExists: Boolean(document.querySelector('.help')),
+    };
+  });
+  assert.ok(boxHealth(report.desktop.ui.topbar) && report.desktop.ui.topbar.width <= 270, 'desktop character HUD must stay compact');
+  assert.ok(boxHealth(report.desktop.ui.quest) && report.desktop.ui.quest.width <= 245, 'desktop quest HUD must stay compact');
+  assert.ok(boxHealth(report.desktop.ui.skills) && report.desktop.ui.skills.width <= 200, 'desktop ability bar must stay compact');
+  assert.equal(report.desktop.ui.questCopyDisplay, 'none', 'long quest copy must stay out of the persistent HUD');
+  assert.equal(report.desktop.ui.persistentHelpExists, false, 'persistent gameplay help pill should not return');
+
   await resetMovement(page);
   let before = await samplePlayer(page);
   await page.keyboard.down('KeyW'); await waitForDistance(page, before); let after = await samplePlayer(page); await page.keyboard.up('KeyW');
   let d = displacement(before, after); report.desktop.forward = { before, after, displacement: d };
   assert.ok(d.z < -.92 && Math.abs(d.x) < .2, `W should move camera-forward, got ${JSON.stringify(d)}`);
   assert.ok(dot(d, after.visualForward) > .9, 'hero visual must face forward movement');
+  assert.equal(after.assetRotationY, 0, 'Rowan visual must not be locally rotated 180 degrees');
   assert.ok(['walk', 'run'].includes(after.animation), `forward movement should play walk/run, got ${after.animation}`);
 
   await resetMovement(page);
@@ -112,12 +135,53 @@ try {
   await page.keyboard.down('KeyA'); await waitForDistance(page, before); after = await samplePlayer(page); await page.keyboard.up('KeyA');
   d = displacement(before, after); report.desktop.left = { before, after, displacement: d };
   assert.ok(d.x < -.9 && Math.abs(d.z) < .3, `A should move screen-left, got ${JSON.stringify(d)}`);
+
+  await page.evaluate(() => {
+    const g = window.__MAPLES_GAME__;
+    g.cameraPitch = .28;
+    g.input.mouseDY = -60;
+  });
+  await page.waitForTimeout(80);
+  report.desktop.lookUpPitch = await page.evaluate(() => window.__MAPLES_GAME__.cameraPitch);
+  assert.ok(report.desktop.lookUpPitch < .28, `mouse up must look up by lowering orbit pitch; got ${report.desktop.lookUpPitch}`);
+
+  await page.evaluate(() => {
+    const g = window.__MAPLES_GAME__;
+    g.cameraPitch = .28;
+    g.input.mouseDY = 60;
+  });
+  await page.waitForTimeout(80);
+  report.desktop.lookDownPitch = await page.evaluate(() => window.__MAPLES_GAME__.cameraPitch);
+  assert.ok(report.desktop.lookDownPitch > .28, `mouse down must look down by raising orbit pitch; got ${report.desktop.lookDownPitch}`);
   await desktop.close();
 
   const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
   const mp = await mobile.newPage();
   await readyGame(mp);
-  const box = await mp.locator('#joystick').boundingBox();
+
+  report.mobile.ui = await mp.evaluate(() => {
+    const rect = selector => {
+      const el = document.querySelector(selector);
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return { x: r.x, y: r.y, width: r.width, height: r.height, right: r.right, bottom: r.bottom };
+    };
+    return {
+      topbar: rect('.topbar'),
+      quest: rect('.quest'),
+      joystick: rect('#joystick'),
+      actions: rect('.mobile-actions'),
+      questCopyDisplay: getComputedStyle(document.querySelector('.quest-copy')).display,
+    };
+  });
+  assert.ok(boxHealth(report.mobile.ui.topbar) && report.mobile.ui.topbar.height <= 66, 'mobile character HUD must stay shallow');
+  assert.ok(boxHealth(report.mobile.ui.quest) && report.mobile.ui.quest.height <= 70, 'mobile quest HUD must stay shallow');
+  assert.ok(report.mobile.ui.topbar.right < report.mobile.ui.quest.x, 'mobile top HUD panels must not overlap');
+  assert.equal(report.mobile.ui.questCopyDisplay, 'none', 'mobile persistent HUD must hide long quest copy');
+  assert.ok(report.mobile.ui.joystick.bottom <= 844 && report.mobile.ui.actions.bottom <= 844, 'mobile controls must fit the viewport');
+
+  const joystick = mp.locator('#joystick');
+  const box = await joystick.boundingBox();
   assert.ok(box, 'mobile joystick should be visible');
   const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
 
@@ -135,6 +199,23 @@ try {
   d = displacement(before, after); report.mobile.forward = { before, after, displacement: d };
   assert.ok(d.z < -.88 && Math.abs(d.x) < .35, `joystick-up should move camera-forward, got ${JSON.stringify(d)}`);
   assert.ok(dot(d, after.visualForward) > .9, 'hero visual must face joystick-forward movement');
+
+  await mp.setViewportSize({ width: 320, height: 568 });
+  await mp.waitForTimeout(120);
+  report.mobile.narrowUi = await mp.evaluate(() => {
+    const rect = selector => {
+      const el = document.querySelector(selector);
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return { x: r.x, width: r.width, height: r.height, right: r.right };
+    };
+    return { topbar: rect('.topbar'), quest: rect('.quest'), viewport: innerWidth };
+  });
+  assert.ok(boxHealth(report.mobile.narrowUi.topbar) && boxHealth(report.mobile.narrowUi.quest), '320px top HUD panels must remain measurable');
+  assert.ok(report.mobile.narrowUi.topbar.x >= 0, '320px character HUD must stay inside the left viewport edge');
+  assert.ok(report.mobile.narrowUi.quest.right <= report.mobile.narrowUi.viewport, '320px quest HUD must stay inside the right viewport edge');
+  assert.ok(report.mobile.narrowUi.topbar.right + 6 <= report.mobile.narrowUi.quest.x,
+    `320px HUD panels must keep at least a 6px gap; got ${JSON.stringify(report.mobile.narrowUi)}`);
   await mobile.close();
 
   fs.writeFileSync(path.join(out, 'movement-report.json'), JSON.stringify(report, null, 2));

@@ -107,8 +107,44 @@ try {
   }, null, { timeout: 30000 });
   assert.equal(await page.evaluate(() => window.__MAPLES_GAME__.player.assetAnimator?.key), 'cast');
 
+  await page.evaluate(() => {
+    const g = window.__MAPLES_GAME__;
+    g.kills = g.objectiveKills; g.bossPending = true; g.bossTimer = .03;
+    g.player.setPosition(0,0,-6.3); g.player.facing = Math.PI; g.player.root.rotation.y = Math.PI; g.cameraYaw = Math.PI;
+  });
+  await page.waitForFunction(() => {
+    const g = window.__MAPLES_GAME__;
+    return Boolean(g.boss?.assetVisual) && g.boss.state === 'spawn' && g.bossRevealTimer > 0 && g.animationPolishManager?.bossPolished;
+  }, null, { timeout: 90000 });
+  const boss = await page.evaluate(() => ({
+    imported: Boolean(window.__MAPLES_GAME__.boss?.assetVisual),
+    kind: window.__MAPLES_GAME__.boss?.assetKind,
+    polished: Boolean(window.__MAPLES_GAME__.animationPolishManager?.bossPolished),
+  }));
+  assert.ok(boss.imported && boss.kind === 'demon' && boss.polished, `boss ${JSON.stringify(boss)}`);
   await context.close();
-  console.log('VISUAL STAGE BOOT LOCOMOTION COMBAT SPELL PASS');
+
+  const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
+  const mp = await mobile.newPage();
+  await mp.goto('http://127.0.0.1:4173', { waitUntil: 'networkidle' });
+  await mp.waitForFunction(() => {
+    const g = window.__MAPLES_GAME__;
+    return Boolean(g?.player?.assetVisual) && g.environmentAssetManager?.ready && g.natureAssetManager?.ready &&
+      g.animationPolishManager?.ready && document.querySelector('#enter-btn')?.dataset.ready === 'true';
+  }, null, { timeout: 90000 });
+  const mobileState = await mp.evaluate(() => ({
+    controls: getComputedStyle(document.querySelector('#mobile-controls')).display,
+    heroImported: Boolean(window.__MAPLES_GAME__.player.assetVisual),
+    environmentPieces: window.__MAPLES_GAME__.environmentAssetManager?.count ?? 0,
+    naturePieces: window.__MAPLES_GAME__.natureAssetManager?.count ?? 0,
+    animationPolishReady: Boolean(window.__MAPLES_GAME__.animationPolishManager?.ready),
+  }));
+  assert.notEqual(mobileState.controls, 'none');
+  assert.ok(mobileState.heroImported && mobileState.environmentPieces >= 14 && mobileState.naturePieces >= 35 && mobileState.animationPolishReady,
+    `mobile ${JSON.stringify(mobileState)}`);
+  await mobile.close();
+
+  console.log('VISUAL STAGE FULL FUNCTIONAL PASS');
 } finally {
   await browser.close();
 }
